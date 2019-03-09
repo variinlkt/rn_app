@@ -5,7 +5,9 @@ import {
     View,
     TextInput,
     TouchableHighlight,
-    Button
+    Button,
+    TouchableOpacity,
+    Alert
 } from 'react-native';
   
 export default class Textbox extends Component {
@@ -20,7 +22,20 @@ export default class Textbox extends Component {
 
     }
     onPressSend(){
-        console.log('send')
+        if(!this.state.text.length){
+            return Alert.alert(
+                '注意',
+                '问题不能为空哦',
+                [
+                  {text: '好', onPress: () => console.log('OK Pressed')},
+                ],
+                { cancelable: false }
+              )
+        }
+        this.props.onPress(this.state.text)
+        this.setState({
+            text: ''
+        })
     }
     onChangeText(text){
         this.setState({
@@ -36,12 +51,12 @@ export default class Textbox extends Component {
                 value={this.state.text}
                 placeholder="请输入问题"
             />
-            <TouchableHighlight
+            <TouchableOpacity
                 onPress={this.onPressSend}
                 style={styles.button}
             >
                 <Text style={styles.buttonText}>发送</Text>
-            </TouchableHighlight>
+            </TouchableOpacity>
             {/* <Button
                 onPress={this.onPressSend}
                 title="send"
@@ -85,9 +100,11 @@ const styles = StyleSheet.create({
         bottom: 16,
         paddingBottom: 12,
         paddingRight: 6,
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     buttonText: {
-        fontSize: 20
-
+        fontSize: 20,
+        textAlign: 'center'
     }
 });

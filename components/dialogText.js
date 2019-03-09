@@ -7,10 +7,13 @@ import {
 const styles = StyleSheet.create({
     container:{
         marginLeft: 10,
-        marginRight: 10
+        marginRight: 10,
+        maxWidth: '85%',
+        // borderColor: '#000',
+        // borderWidth: 1
     },
     box: {
-        maxWidth: '90%',
+        maxWidth: '100%',
         // height: 50,
         position: 'relative',
         borderRadius: 10,
