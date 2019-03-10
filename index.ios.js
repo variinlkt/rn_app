@@ -11,7 +11,10 @@ import {
   Text,
   View,
   FlatList,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Keyboard,
+  Dimensions,
+  Animated
 } from 'react-native';
 import Head from './components/head';
 import Textbox from './components/textbox';
@@ -36,13 +39,17 @@ export default class MyApp extends Component {
         "物理",
         "化学"
       ],
-      enableFlatAviod: false
+      enableFlatAviod: false,
+      marginBottom: 72
     }
     this.changeTitle = this.changeTitle.bind(this)
     this.openPicker = this.openPicker.bind(this)
     this._renderItem = this._renderItem.bind(this)
     this._captureRef = this._captureRef.bind(this)
     this.addMsg = this.addMsg.bind(this)
+    this._keyboardDidShow = this._keyboardDidShow.bind(this)
+    this._keyboardDidHide = this._keyboardDidHide.bind(this)
+    this._onLayout = this._onLayout.bind(this)
   }
   componentDidMount(){
     let { subject } = this.state
@@ -52,6 +59,9 @@ export default class MyApp extends Component {
         text: `你好，我是${subject}老师，请问有什么可以帮到你？`
       })
     },1000)
+    this.dimensionsHeight = Dimensions.get('window').height
+    this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this._keyboardDidShow)
+    this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this._keyboardDidHide)
   }
   addMsg(msg){
     const { dialogs } = this.state
@@ -132,23 +142,65 @@ export default class MyApp extends Component {
       enableFlatAviod: state
     })
   }
+  _onLayout(e){
+    let { height } = e.nativeEvent.layout
+    this.listHeight = height
+  }
+_keyboardDidShow(e){
+  // let keyboardHeight = e.endCoordinates.height
+  // let restHeight = this.dimensionsHeight - 80 - keyboardHeight - 72
+  // console.log(restHeight, this.listHeight)
+  // if(restHeight < this.listHeight){//flatlist需要偏移
+  //   this._listRef.scrollToOffset({
+  //     animated: true, 
+  //     offset: (this.listHeight - keyboardHeight)
+  //   });
+
+  // }
+  // Animated.timing(                       // 随时间变化而执行动画
+  //     this.state.marginBottom,            // 动画中的变量值
+  //     {
+  //       toValue: e.endCoordinates.height + 72 ,                        // 透明度最终变为1，即完全不透明
+  //       duration: 300,                   // 让动画持续一段时间
+  //     }
+  //   ).start();   
+  this.setState({
+      marginBottom: e.endCoordinates.height + 80
+  })
+}
+_keyboardDidHide(){
+  this.setState({
+    marginBottom: 80
+  })
+  // Animated.timing(                       // 随时间变化而执行动画
+  //     this.state.marginBottom,            // 动画中的变量值
+  //     {
+  //       toValue: 72,                        // 透明度最终变为1，即完全不透明
+  //       duration: 300,                   // 让动画持续一段时间
+  //     }
+  // ).start();
+    // this._listRef.scrollToOffset({
+    //   animated: true, 
+    //   offset: 0
+    // });
+}
   _renderItem({item, index}){
     return <Dialog avatarType={item.type} text={item.text} key={index+item.type}></Dialog>
   }
-  _onChangeScrollToIndex(){
-    this._listRef.scrollToEnd()
-  }
+  // _onChangeScrollToIndex(){
+  //   this._listRef.scrollToEnd()
+  // }
   _captureRef(ref){
     this._listRef = ref
   }
   render() {
-    const { dialogs, list, subject, showStatus, enableFlatAviod } = this.state
+    const { dialogs, list, subject, showStatus, enableFlatAviod, marginBottom } = this.state
     for (var i = 0; i < dialogs.length; i++) {
       dialogs[i]['key'] = i;
    }
     return (
       <View style={styles.container}>
-        <KeyboardAvoidingView behavior='position' style={styles.avoidingView}>
+        {/* <KeyboardAvoidingView behavior='position' style={styles.avoidingView}> */}
           <Head list={list} 
             subject={subject} 
             showStatus={showStatus} 
@@ -160,12 +212,16 @@ export default class MyApp extends Component {
           <FlatList
             data={dialogs}
             renderItem={this._renderItem}
-            style={styles.FlatList}
+            style={{
+              marginBottom,
+              backgroundColor:'red'
+            }}
             ref={this._captureRef}
+            onLayout={this._onLayout}
           />
         {/* </KeyboardAvoidingView>
         <KeyboardAvoidingView behavior='position'> */}
-        {/* <KeyboardAvoidingView behavior='position' > */}
+        <KeyboardAvoidingView behavior='position' style={styles.textbox}>
 
           <Textbox style={styles.textbox}
             onPress={this.addMsg}
@@ -197,16 +253,13 @@ const styles = StyleSheet.create({
   },
   textbox: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 0,
     left: 0,
-    display: 'flex',
-    borderColor:'red',
-    borderWidth: 2
+    width: '100%'
   },
-  FlatList: {
-    marginBottom: 80,
-    height: '70%'
-  },
+  // FlatList: {
+  //   marginBottom: 80,
+  // },
   avoidingView: {
     height: '100%',
     borderColor:'#000',

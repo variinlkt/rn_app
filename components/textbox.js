@@ -4,10 +4,10 @@ import {
     Text,
     View,
     TextInput,
-    TouchableHighlight,
-    Button,
     TouchableOpacity,
-    Alert
+    Alert,
+    Keyboard,
+    Animated
 } from 'react-native';
   
 export default class Textbox extends Component {
@@ -15,11 +15,9 @@ export default class Textbox extends Component {
         super(props)
         this.state = {
             text: '',
-
         }
         this.onPressSend = this.onPressSend.bind(this)
         this.onChangeText = this.onChangeText.bind(this)
-
     }
     onPressSend(){
         if(!this.state.text.length){
@@ -44,7 +42,9 @@ export default class Textbox extends Component {
     }
     render() {
         return (
-        <View style={styles.textbox}>
+        <View style={[styles.textbox, {
+            // bottom: 0,
+        }]}>
             <TextInput
                 style={styles.textInput}
                 onChangeText={this.onChangeText}
@@ -63,15 +63,14 @@ export default class Textbox extends Component {
                 color="#841584"
                 accessibilityLabel="Learn more about this purple button"
             /> */}
-        </View>
+        </View >
         );
     }
 }
 const styles = StyleSheet.create({
     textbox: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
+        // position: 'absolute',
+        // left: 0,
         display: 'flex',
         width: '100%',
         backgroundColor: '#fff',
