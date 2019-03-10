@@ -40,6 +40,7 @@ export default class MyApp extends Component {
         "物理",
         "化学"
       ],
+      marginBottom: 80
     }
     this.changeTitle = this.changeTitle.bind(this)
     this.openPicker = this.openPicker.bind(this)
@@ -68,7 +69,6 @@ export default class MyApp extends Component {
   addMsg(msg){//添加一个dialog对话框
     const { dialogs } = this.state
     if(typeof msg == 'string'){//处理用户发的消息
-      this.getData(msg)
       msg = {
         type: 'user',
         text: msg
@@ -77,7 +77,9 @@ export default class MyApp extends Component {
     this.setState({
       dialogs: dialogs.concat(msg)
     })
-    let judegeTimer = setTimeout(()=>this.judgeOffset(), 10)//layout获取的高度有延迟
+    let judegeTimer = setTimeout(()=>this.judgeOffset(), 10);//layout获取的高度有延迟
+    msg.type == 'user' && this.getData(msg.text)
+
   }
   openPicker(showStatus){//打开或关闭picker
     let { lastChosenSubject, subject } = this.state
@@ -137,38 +139,53 @@ export default class MyApp extends Component {
     }
     return subjectMap[subject]
   }
-  judgeOffset(e){//判断list是否需要偏移
-    this.keyboardHeight = e && e.endCoordinates.height || 0
-    let restHeight = this.dimensionsHeight - 80 - this.keyboardHeight - 72
-    
+  judgeOffset(){//判断list是否需要偏移
+    let restHeight = this.dimensionsHeight - 80 - (this.keyboardHeight || 0) - 72
+    console.log('judge', restHeight,this.listHeight)//744 531
     if(restHeight < this.listHeight){//list需要偏移
       this.scrollToEnd()
     }
   }
   judgeOffsetWhenKeyboardHide(){//判断list高度是否大于scrollview
-    let scrollViewHeight = this.dimensionsHeight - 152
+    let scrollViewHeight = this.dimensionsHeight - 160
     let distance = this.listHeight - scrollViewHeight
     if(distance > 0){
-      this._listRef.scrollTo({
+      return this._listRef.scrollTo({
         y: distance,
         animated: true
       })
     }
+    this._listRef.scrollTo({
+      y: 0,
+      animated: true
+    })
   }
   scrollToEnd(){//处理键盘弹出和发送消息时,让list偏移的情况
+    // let srollViewHeight = this.dimensionsHeight - 152
+    let offset = 160+(this.keyboardHeight || 0)+this.listHeight-this.dimensionsHeight
+    console.log(this.listHeight, offset)
     this._listRef.scrollTo({
       animated: true, 
-      y: 160+this.keyboardHeight+this.listHeight-this.dimensionsHeight
+      y: offset
     });
   }
   _onLayout(e){//获取list的高度
     let { height } = e.nativeEvent.layout
     this.listHeight = height
+    console.log(height)
   }
   _keyboardDidShow(e){//键盘显示
-    this.judgeOffset(e)
+    this.keyboardHeight = e && e.endCoordinates.height
+    this.setState({
+      marginBottom: this.keyboardHeight + 80
+    })
+    this.judgeOffset()
   }
   _keyboardDidHide(){//键盘收起
+    this.keyboardHeight = 0
+    this.setState({
+      marginBottom: 80
+    })
     this.judgeOffsetWhenKeyboardHide()
 
   }
@@ -176,7 +193,7 @@ export default class MyApp extends Component {
     this._listRef = ref
   }
   render() {
-    const { dialogs, list, subject, showStatus } = this.state
+    const { dialogs, list, subject, showStatus, marginBottom } = this.state
     return (
       <View style={styles.container}>
           <Head list={list} 
@@ -187,7 +204,9 @@ export default class MyApp extends Component {
           </Head>
           <ScrollView
             ref={this._captureRef}
-            style={styles.scrollView}
+            style={{
+              marginBottom
+            }}
           >
             <View 
             onLayout={this._onLayout}
@@ -232,9 +251,9 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%'
   },
-  scrollView: {
-    marginBottom: 80,
-  },
+  // scrollView: {
+  //   marginBottom: 80,
+  // },
   avoidingView: {
     height: '100%',
     borderColor:'#000',
