@@ -14,7 +14,8 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   Dimensions,
-  Animated
+  Animated,
+  ScrollView
 } from 'react-native';
 import Head from './components/head';
 import Textbox from './components/textbox';
@@ -39,17 +40,15 @@ export default class MyApp extends Component {
         "物理",
         "化学"
       ],
-      enableFlatAviod: false,
-      marginBottom: 72
     }
     this.changeTitle = this.changeTitle.bind(this)
     this.openPicker = this.openPicker.bind(this)
-    this._renderItem = this._renderItem.bind(this)
     this._captureRef = this._captureRef.bind(this)
     this.addMsg = this.addMsg.bind(this)
     this._keyboardDidShow = this._keyboardDidShow.bind(this)
     this._keyboardDidHide = this._keyboardDidHide.bind(this)
     this._onLayout = this._onLayout.bind(this)
+    this.scrollToEnd = this.scrollToEnd.bind(this)
   }
   componentDidMount(){
     let { subject } = this.state
@@ -58,14 +57,17 @@ export default class MyApp extends Component {
         type: 'teacher',
         text: `你好，我是${subject}老师，请问有什么可以帮到你？`
       })
+
     },1000)
+    //获取屏幕高度
     this.dimensionsHeight = Dimensions.get('window').height
+    //监听键盘事件
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this._keyboardDidShow)
     this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this._keyboardDidHide)
   }
-  addMsg(msg){
+  addMsg(msg){//添加一个dialog对话框
     const { dialogs } = this.state
-    if(typeof msg == 'string'){
+    if(typeof msg == 'string'){//处理用户发的消息
       this.getData(msg)
       msg = {
         type: 'user',
@@ -75,9 +77,9 @@ export default class MyApp extends Component {
     this.setState({
       dialogs: dialogs.concat(msg)
     })
-    // this._onChangeScrollToIndex()
+    let judegeTimer = setTimeout(()=>this.judgeOffset(), 10)//layout获取的高度有延迟
   }
-  openPicker(showStatus){
+  openPicker(showStatus){//打开或关闭picker
     let { lastChosenSubject, subject } = this.state
     this.setState({
         showStatus
@@ -93,15 +95,13 @@ export default class MyApp extends Component {
       })
     }
   }
-  changeTitle(subject){
+  changeTitle(subject){//切换学科
     this.setState({
       subject
     })
   }
   
-  async getData(msg){
-    // 166.111.68.66:8007
-    //http://ip/course/inputQuestion
+  async getData(msg){//发送请求
     try{
       let subject = this.mapping(this.state.subject)
       let res = await fetch('http://166.111.68.66:8007/course/inputQuestion', {
@@ -123,7 +123,7 @@ export default class MyApp extends Component {
       console.error(e)
     }
   }
-  mapping(subject){
+  mapping(subject){//中文学科名对应的英文，用于请求
     const subjectMap = {
       "语文": "chinese",
       "数学": "math",
@@ -137,99 +137,75 @@ export default class MyApp extends Component {
     }
     return subjectMap[subject]
   }
-  onChangeView(state){
-    this.setState({
-      enableFlatAviod: state
-    })
+  judgeOffset(e){//判断list是否需要偏移
+    this.keyboardHeight = e && e.endCoordinates.height || 0
+    let restHeight = this.dimensionsHeight - 80 - this.keyboardHeight - 72
+    
+    if(restHeight < this.listHeight){//list需要偏移
+      this.scrollToEnd()
+    }
   }
-  _onLayout(e){
+  judgeOffsetWhenKeyboardHide(){//判断list高度是否大于scrollview
+    let scrollViewHeight = this.dimensionsHeight - 152
+    let distance = this.listHeight - scrollViewHeight
+    if(distance > 0){
+      this._listRef.scrollTo({
+        y: distance,
+        animated: true
+      })
+    }
+  }
+  scrollToEnd(){//处理键盘弹出和发送消息时,让list偏移的情况
+    this._listRef.scrollTo({
+      animated: true, 
+      y: 160+this.keyboardHeight+this.listHeight-this.dimensionsHeight
+    });
+  }
+  _onLayout(e){//获取list的高度
     let { height } = e.nativeEvent.layout
     this.listHeight = height
   }
-_keyboardDidShow(e){
-  // let keyboardHeight = e.endCoordinates.height
-  // let restHeight = this.dimensionsHeight - 80 - keyboardHeight - 72
-  // console.log(restHeight, this.listHeight)
-  // if(restHeight < this.listHeight){//flatlist需要偏移
-  //   this._listRef.scrollToOffset({
-  //     animated: true, 
-  //     offset: (this.listHeight - keyboardHeight)
-  //   });
-
-  // }
-  // Animated.timing(                       // 随时间变化而执行动画
-  //     this.state.marginBottom,            // 动画中的变量值
-  //     {
-  //       toValue: e.endCoordinates.height + 72 ,                        // 透明度最终变为1，即完全不透明
-  //       duration: 300,                   // 让动画持续一段时间
-  //     }
-  //   ).start();   
-  this.setState({
-      marginBottom: e.endCoordinates.height + 80
-  })
-}
-_keyboardDidHide(){
-  this.setState({
-    marginBottom: 80
-  })
-  // Animated.timing(                       // 随时间变化而执行动画
-  //     this.state.marginBottom,            // 动画中的变量值
-  //     {
-  //       toValue: 72,                        // 透明度最终变为1，即完全不透明
-  //       duration: 300,                   // 让动画持续一段时间
-  //     }
-  // ).start();
-    // this._listRef.scrollToOffset({
-    //   animated: true, 
-    //   offset: 0
-    // });
-}
-  _renderItem({item, index}){
-    return <Dialog avatarType={item.type} text={item.text} key={index+item.type}></Dialog>
+  _keyboardDidShow(e){//键盘显示
+    this.judgeOffset(e)
   }
-  // _onChangeScrollToIndex(){
-  //   this._listRef.scrollToEnd()
-  // }
-  _captureRef(ref){
+  _keyboardDidHide(){//键盘收起
+    this.judgeOffsetWhenKeyboardHide()
+
+  }
+  _captureRef(ref){//ref
     this._listRef = ref
   }
   render() {
-    const { dialogs, list, subject, showStatus, enableFlatAviod, marginBottom } = this.state
-    for (var i = 0; i < dialogs.length; i++) {
-      dialogs[i]['key'] = i;
-   }
+    const { dialogs, list, subject, showStatus } = this.state
     return (
       <View style={styles.container}>
-        {/* <KeyboardAvoidingView behavior='position' style={styles.avoidingView}> */}
           <Head list={list} 
             subject={subject} 
             showStatus={showStatus} 
             onOpenPicker={this.openPicker.bind(this, !showStatus)} 
             onChangeTitle={this.changeTitle}>
           </Head>
-        {/* </KeyboardAvoidingView>
-        <KeyboardAvoidingView behavior='position'> */}
-          <FlatList
-            data={dialogs}
-            renderItem={this._renderItem}
-            style={{
-              marginBottom,
-              backgroundColor:'red'
-            }}
+          <ScrollView
             ref={this._captureRef}
-            onLayout={this._onLayout}
-          />
-        {/* </KeyboardAvoidingView>
-        <KeyboardAvoidingView behavior='position'> */}
-        <KeyboardAvoidingView behavior='position' style={styles.textbox}>
-
-          <Textbox style={styles.textbox}
-            onPress={this.addMsg}
-            onFocus={this.onChangeView.bind(this, true)}
-            onBlur={this.onChangeView.bind(this, false)}
+            style={styles.scrollView}
           >
-          </Textbox>  
-        </KeyboardAvoidingView>
+            <View 
+            onLayout={this._onLayout}
+            >
+              {
+                (dialogs.length > 0) && dialogs.map((item,index)=>(
+                  <Dialog avatarType={item.type} text={item.text} key={index+item.type}></Dialog>
+                ))
+              }
+            </View>
+          </ScrollView>
+          <KeyboardAvoidingView behavior='position' style={styles.textbox}>
+
+            <Textbox style={styles.textbox}
+              onPress={this.addMsg}
+            >
+            </Textbox>  
+          </KeyboardAvoidingView>
       </View>
     );
   }
@@ -239,7 +215,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ecf0f1',
-    position: 'relative',
   },
   welcome: {
     fontSize: 20,
@@ -257,9 +232,9 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%'
   },
-  // FlatList: {
-  //   marginBottom: 80,
-  // },
+  scrollView: {
+    marginBottom: 80,
+  },
   avoidingView: {
     height: '100%',
     borderColor:'#000',
