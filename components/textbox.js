@@ -57,12 +57,6 @@ export default class Textbox extends Component {
             >
                 <Text style={styles.buttonText}>发送</Text>
             </TouchableOpacity>
-            {/* <Button
-                onPress={this.onPressSend}
-                title="send"
-                color="#841584"
-                accessibilityLabel="Learn more about this purple button"
-            /> */}
         </View >
         );
     }
@@ -83,12 +77,13 @@ const styles = StyleSheet.create({
     },
     textInput: {
         height: 40, 
-        // borderColor: 'gray', 
-        // borderWidth: 1,
+        borderColor: 'transparent', 
+        borderWidth: 1,
         // borderRightColor: 'transparent',
         // borderTopColor: 'transparent',
         // borderLeftColor: 'transparent',
-        // borderBottomColor: 'gray',
+        borderBottomColor: 'gray',
+        borderBottomWidth:1,
         paddingLeft: 8,
         width: '80%'
     },

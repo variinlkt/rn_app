@@ -20,6 +20,7 @@ import {
 import Head from './components/head';
 import Textbox from './components/textbox';
 import Dialog from './components/dialog';
+
 export default class MyApp extends Component {
   constructor(props){
     super(props)
@@ -56,7 +57,9 @@ export default class MyApp extends Component {
     let timer = setTimeout(()=>{
       this.addMsg({
         type: 'teacher',
-        text: `你好，我是${subject}老师，请问有什么可以帮到你？`
+        text: `你好，我是${subject}老师，请问有什么可以帮到你？`,
+        subject: this.mapping(subject)
+
       })
 
     },1000)
@@ -93,7 +96,8 @@ export default class MyApp extends Component {
     }else{//关闭picker时，如果当前选择的科目跟上次的一样，就不发新消息
       (lastChosenSubject != subject) && this.addMsg({
         type: 'teacher',
-        text: `你好，我是${subject}老师，请问有什么可以帮到你？`
+        text: `你好，我是${subject}老师，请问有什么可以帮到你？`,
+
       })
     }
   }
@@ -102,27 +106,40 @@ export default class MyApp extends Component {
       subject
     })
   }
-  
+  _fetchWithTimeout(fetch, timeout=10000){
+    return Promise.race([
+      fetch,
+      new Promise((resolve, reject)=>{
+        let timer = setTimeout(() => {
+          reject('fetch timeout!')
+        }, timeout);
+      })
+    ])
+  }
   async getData(msg){//发送请求
     try{
       let subject = this.mapping(this.state.subject)
-      let res = await fetch('http://166.111.68.66:8007/course/inputQuestion', {
+      let res = await this._fetchWithTimeout(fetch('http://166.111.68.66:8007/course/inputQuestion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: `course=${subject}&inputQuestion=${msg}`
-      })
+      }))
       res = (await res.json())[0]
-      console.log(res)
-
       this.addMsg({
         type: 'teacher',
-        text: res.value
+        text: res.value || '老师也不知道答案哦。',
+
       })
 
     }catch(e){
-      console.error(e)
+      console.log(e)
+      this.addMsg({
+        type: 'teacher',
+        text: '我不明白你在说什么。请你换一种提问方式或检查网络连接是否正常。',
+
+      })
     }
   }
   mapping(subject){//中文学科名对应的英文，用于请求
