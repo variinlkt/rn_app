@@ -71,6 +71,7 @@ export default class MyApp extends Component {
   }
   addMsg(msg){//添加一个dialog对话框
     const { dialogs } = this.state
+    console.log(msg)
     if(typeof msg == 'string'){//处理用户发的消息
       msg = {
         type: 'user',
@@ -80,9 +81,16 @@ export default class MyApp extends Component {
     this.setState({
       dialogs: dialogs.concat(msg)
     })
-    let judegeTimer = setTimeout(()=>this.judgeOffset(), 10);//layout获取的高度有延迟
-    msg.type == 'user' && this.getData(msg.text)
-
+    let judegeTimer = setTimeout(()=>{
+      this.judgeOffset()
+      if(msg.type == 'user'){
+        this.getData(msg.text) 
+        this.addMsg({
+          type: 'teacher',
+          loading: true
+        })
+      }
+    }, 10);//layout获取的高度有延迟
   }
   openPicker(showStatus){//打开或关闭picker
     let { lastChosenSubject, subject } = this.state
@@ -106,7 +114,7 @@ export default class MyApp extends Component {
       subject
     })
   }
-  _fetchWithTimeout(fetch, timeout=10000){
+  _fetchWithTimeout(fetch, timeout=10000){//封装fetch，添加timeout
     return Promise.race([
       fetch,
       new Promise((resolve, reject)=>{
@@ -115,6 +123,17 @@ export default class MyApp extends Component {
         }, timeout);
       })
     ])
+  }
+  cancelLoading(val = '老师也不知道答案哦。'){//获取答案后关闭loading态
+    let { dialogs } = this.state,
+      len = dialogs.length,
+      dialog = dialogs[len-1]
+
+    dialog.loading = false
+    dialog.text = val
+    this.setState({
+      dialogs
+    })
   }
   async getData(msg){//发送请求
     try{
@@ -127,19 +146,11 @@ export default class MyApp extends Component {
         body: `course=${subject}&inputQuestion=${msg}`
       }))
       res = (await res.json())[0]
-      this.addMsg({
-        type: 'teacher',
-        text: res.value || '老师也不知道答案哦。',
-
-      })
+      this.cancelLoading(res.value)
 
     }catch(e){
       console.log(e)
-      this.addMsg({
-        type: 'teacher',
-        text: '我不明白你在说什么。请你换一种提问方式或检查网络连接是否正常。',
-
-      })
+      this.cancelLoading('我不明白你在说什么。请你换一种提问方式或检查网络连接是否正常。')
     }
   }
   mapping(subject){//中文学科名对应的英文，用于请求
@@ -230,7 +241,7 @@ export default class MyApp extends Component {
             >
               {
                 (dialogs.length > 0) && dialogs.map((item,index)=>(
-                  <Dialog avatarType={item.type} text={item.text} key={index+item.type}></Dialog>
+                  <Dialog avatarType={item.type} loading={item.loading} text={item.text} key={index+item.type}></Dialog>
                 ))
               }
             </View>

@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
 export default function Dialog(props) {
     let user = require('../assets/img/user.jpg'),
         teacher = require('../assets/img/teacher.jpeg')
-    const { avatarType, text } = props
+    const { avatarType, text, loading } = props
     return (
     <View style={[styles.container, {
         justifyContent: avatarType == 'user' ? 'flex-end' : 'flex-start',
@@ -45,7 +45,7 @@ export default function Dialog(props) {
         />
         {
             avatarType != 'user' && (
-                <DialogText text={text} style={styles.DialogText} type={avatarType}>
+                <DialogText text={text} loading={loading} style={styles.DialogText} type={avatarType}>
 
                 </DialogText>
             )

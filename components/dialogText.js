@@ -2,7 +2,9 @@ import React, { Component } from 'react';
 import {
     StyleSheet,
     Text,
-    View
+    View,
+    Image,
+    Animated
 } from 'react-native';
 const styles = StyleSheet.create({
     container:{
@@ -31,24 +33,60 @@ const styles = StyleSheet.create({
     },
     text: {
         fontSize: 20
+    },
+    image: {
+        width: 24,
+        height: 24,
     }
 });
-export default function DialogText(props) {
-    const { text, type } = props
-    return (
-    <View style={styles.container}>
-        <View style={[styles.box, {
-            backgroundColor: type == 'user' ? '#2ecc71' : '#fff',
-        }]}>
-            <View style={[styles.triangle, {
-                [type == 'user' ? 'borderLeftWidth' : 'borderRightWidth']: 10,
-                [type == 'user' ? 'borderLeftColor' : 'borderRightColor']: type == 'user' ? '#2ecc71' : '#fff',
-                [type == 'user' ? 'right' : 'left']: -10,
+export default class DialogText extends Component {
+    constructor(props){
+        super(props)
+        this.state = {
+            degree: new Animated.Value(0), 
+        }
+    }
+    componentDidMount() {
+        let animation = Animated.timing(                       
+          this.state.degree,           
+          {
+            toValue: 360,                        
+            duration: 700, 
+          }
+        )
+        Animated.loop(animation).start();                           
+    }
+    render(){
+        let { degree } = this.state
+        const { text, type, loading } = this.props
+        return (
+        <View style={styles.container}>
+            <View style={[styles.box, {
+                backgroundColor: type == 'user' ? '#2ecc71' : '#fff',
             }]}>
-            
+                <View style={[styles.triangle, {
+                    [type == 'user' ? 'borderLeftWidth' : 'borderRightWidth']: 10,
+                    [type == 'user' ? 'borderLeftColor' : 'borderRightColor']: type == 'user' ? '#2ecc71' : '#fff',
+                    [type == 'user' ? 'right' : 'left']: -10,
+                }]}>
+                
+                </View>
+                {
+                    loading && (
+                        <Animated.Image source={require('../assets/img/loading.png')} 
+                            style={[styles.image, {
+                                transform: [{rotate: this.state.degree
+                                    .interpolate({inputRange: [0, 360],outputRange: ['0deg', '360deg']})
+                                    }]
+                            }]}>
+                        </Animated.Image>
+                    )
+                }
+                {
+                    !loading && <Text style={styles.text}>{text}</Text>
+                }
             </View>
-            <Text style={styles.text}>{text}</Text>
         </View>
-    </View>
-    );
+        );
+    }
 }
