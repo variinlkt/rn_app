@@ -4,7 +4,8 @@ import {
     Text,
     View,
     Image,
-    Animated
+    Animated,
+    TouchableOpacity
 } from 'react-native';
 const styles = StyleSheet.create({
     container:{
@@ -60,7 +61,7 @@ export default class DialogText extends Component {
         let { degree } = this.state
         const { text, type, loading } = this.props
         return (
-        <View style={styles.container}>
+        <TouchableOpacity style={styles.container}>
             <View style={[styles.box, {
                 backgroundColor: type == 'user' ? '#2ecc71' : '#fff',
             }]}>
@@ -69,24 +70,26 @@ export default class DialogText extends Component {
                     [type == 'user' ? 'borderLeftColor' : 'borderRightColor']: type == 'user' ? '#2ecc71' : '#fff',
                     [type == 'user' ? 'right' : 'left']: -10,
                 }]}>
-                
                 </View>
                 {
                     loading && (
                         <Animated.Image source={require('../assets/img/loading.png')} 
                             style={[styles.image, {
-                                transform: [{rotate: this.state.degree
-                                    .interpolate({inputRange: [0, 360],outputRange: ['0deg', '360deg']})
-                                    }]
+                                transform: [{
+                                    rotate: degree.interpolate({
+                                        inputRange: [0, 360],
+                                        outputRange: ['0deg', '360deg']
+                                    })
+                                }]
                             }]}>
                         </Animated.Image>
                     )
                 }
                 {
-                    !loading && <Text style={styles.text}>{text}</Text>
+                    !loading && <Text selectable={true} style={styles.text}>{text}</Text>
                 }
             </View>
-        </View>
+        </TouchableOpacity>
         );
     }
 }

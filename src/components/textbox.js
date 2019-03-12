@@ -20,7 +20,8 @@ export default class Textbox extends Component {
         this.onChangeText = this.onChangeText.bind(this)
     }
     onPressSend(){
-        if(!this.state.text.length){
+        let {text} = this.state
+        if(!text.length){
             return Alert.alert(
                 '注意',
                 '问题不能为空哦',
@@ -28,9 +29,9 @@ export default class Textbox extends Component {
                   {text: '好', onPress: () => console.log('OK Pressed')},
                 ],
                 { cancelable: false }
-              )
+            )
         }
-        this.props.onPress(this.state.text)
+        this.props.onPress(text)
         this.setState({
             text: ''
         })
