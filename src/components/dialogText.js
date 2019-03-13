@@ -1,9 +1,8 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import {
     StyleSheet,
     Text,
     View,
-    Image,
     Animated,
     TouchableOpacity
 } from 'react-native';
@@ -40,7 +39,7 @@ const styles = StyleSheet.create({
         height: 24,
     }
 });
-export default class DialogText extends Component {
+export default class DialogText extends PureComponent {
     constructor(props){
         super(props)
         this.state = {

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import {
     StyleSheet,
     Picker,
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
         height: '100%'
     }
 });
-export default class Head extends Component {
+export default class Head extends PureComponent {
     constructor(props){
         super(props)
     }

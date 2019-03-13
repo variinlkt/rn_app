@@ -55,9 +55,7 @@ export default class IndexPage extends Component {
         type: 'teacher',
         text: `你好，我是${subject}老师，请问有什么可以帮到你？`,
         subject: this.mapping(subject)
-
       })
-
     },1000)
     //获取屏幕高度
     this.dimensionsHeight = Dimensions.get('window').height

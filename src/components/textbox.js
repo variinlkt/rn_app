@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import {
     StyleSheet,
     Text,
@@ -6,11 +6,9 @@ import {
     TextInput,
     TouchableOpacity,
     Alert,
-    Keyboard,
-    Animated
 } from 'react-native';
   
-export default class Textbox extends Component {
+export default class Textbox extends PureComponent {
     constructor(props){
         super(props)
         this.state = {

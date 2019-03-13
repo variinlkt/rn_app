@@ -1,7 +1,6 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import {
     StyleSheet,
-    Text,
     View,
     Image
 } from 'react-native';
@@ -12,9 +11,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'nowrap',
         marginTop: 16,
-        // marginBottom: 16,
-        // borderColor: '#000',
-        // borderWidth: 1
     },
     avatar: {
         width: 50,
@@ -24,32 +20,34 @@ const styles = StyleSheet.create({
         borderRadius: 25
     },
 });
-export default function Dialog(props) {
-    let user = require('../assets/img/user.jpg'),
-        teacher = require('../assets/img/teacher.jpeg')
-    const { avatarType, text, loading } = props
+export default class Dialog extends PureComponent{
+    render(){
+        let user = require('../assets/img/user.jpg'),
+            teacher = require('../assets/img/teacher.jpeg')
+        const { avatarType, text, loading } = this.props
     return (
-    <View style={[styles.container, {
-        justifyContent: avatarType == 'user' ? 'flex-end' : 'flex-start',
-    }]}>
-        {
-            avatarType == 'user' && (
-                <DialogText text={text} style={styles.DialogText} type={avatarType}>
+        <View style={[styles.container, {
+            justifyContent: avatarType == 'user' ? 'flex-end' : 'flex-start',
+        }]}>
+            {
+                avatarType == 'user' && (
+                    <DialogText text={text} style={styles.DialogText} type={avatarType}>
 
-                </DialogText>
-            )
-        }
-        <Image
-            style={styles.avatar}
-            source={avatarType == 'user' ? user : teacher}
-        />
-        {
-            avatarType != 'user' && (
-                <DialogText text={text} loading={loading} style={styles.DialogText} type={avatarType}>
+                    </DialogText>
+                )
+            }
+            <Image
+                style={styles.avatar}
+                source={avatarType == 'user' ? user : teacher}
+            />
+            {
+                avatarType != 'user' && (
+                    <DialogText text={text} loading={loading} style={styles.DialogText} type={avatarType}>
 
-                </DialogText>
-            )
-        }
-    </View>
-    );
+                    </DialogText>
+                )
+            }
+        </View>
+        );
+    }
 }
