@@ -5,7 +5,8 @@ import {
     View,
     Text,
     TouchableOpacity,
-    Modal
+    Modal,
+    Image
 } from 'react-native';
 const styles = StyleSheet.create({
     container:{
@@ -15,6 +16,7 @@ const styles = StyleSheet.create({
         height: 80,
         backgroundColor: '#fff',
         zIndex: 100,
+        position: 'relative',
     },
     picker: {
         position: 'absolute',
@@ -25,9 +27,17 @@ const styles = StyleSheet.create({
         fontSize: 26,
         marginTop: 40
     },
-    mask:{
+    mask: {
         backgroundColor: 'rgba(0,0,0,.3)',
         height: '100%'
+    },
+    icon: {
+        position: 'absolute',
+        top: 40,
+        right: 20,
+        display: 'flex',
+        width: 30,
+        height: 30
     }
 });
 export default class Head extends PureComponent {
@@ -35,13 +45,19 @@ export default class Head extends PureComponent {
         super(props)
     }
     render() {
-        const { subject, list, onOpenPicker, onChangeTitle, showStatus } = this.props
+        const { subject, list, onOpenPicker, onChangeTitle, showStatus, onPressSearch } = this.props
         return (
             <View style={styles.container}>
                 <View style={styles.header}>
                     <Text style={styles.text}
                         onPress={onOpenPicker}
-                    >{subject}</Text>
+                    >
+                    {subject}
+                    </Text>
+                    <Image source={require('../assets/img/search.png')}
+                        style={styles.icon}
+                        onPress={onPressSearch}
+                    ></Image>
                 </View>
                 <Modal
                     animationType="fade"

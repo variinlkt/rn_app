@@ -29,18 +29,24 @@ const subjects = [
   "physics",
   "chemistry",
 ]
-let schema = [];
-subjects.map(sub=>{
-  schema.push({
+let schema = subjects.map(sub=>{
+  return {
     name: sub,
+    primaryKey: 'id',
     properties: {
+      id: 'int',
       type: 'string',
       text: 'string',
     }
-  })
+  }
 })
-let realm = new Realm({schema});
-
+let realm = new Realm({
+  schema,
+  deleteRealmIfMigrationNeeded: true
+});
+// realm.write(()=>{
+//   realm.deleteAll()
+// })
 export default class IndexPage extends Component {
   constructor(props){
     super(props)
@@ -66,6 +72,7 @@ export default class IndexPage extends Component {
     }
     this.changeTitle = this.changeTitle.bind(this)
     this.openPicker = this.openPicker.bind(this)
+    this.pressSearch = this.pressSearch.bind(this)
     this._captureRef = this._captureRef.bind(this)
     this.addMsg = this.addMsg.bind(this)
     this._keyboardDidShow = this._keyboardDidShow.bind(this)
@@ -74,7 +81,6 @@ export default class IndexPage extends Component {
     this.scrollToEnd = this.scrollToEnd.bind(this)
   }
   componentDidMount(){
-    let { subject } = this.state
     // let timer = setTimeout(()=>{
     //   this.addMsg({
     //     type: 'teacher',
@@ -82,43 +88,44 @@ export default class IndexPage extends Component {
     //     subject: this.mapping(subject)
     //   })
     // },1000)
-    let data = this.getDBData({subject: this.mapping(subject)}) || [];
-    this.setState({
-      dialog: data
-    });
+    this.getHistoryMsg()
     //获取屏幕高度
     this.dimensionsHeight = Dimensions.get('window').height
     //监听键盘事件
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this._keyboardDidShow)
     this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this._keyboardDidHide)
   }
-  clearScreen(){
+  clearScreen(){//切换学科时，清空屏幕中的聊天记录
     this.setState({
       dialog: []
     });
   }
-  getDBData({subject, filters}){//获取聊天记录
+  getDBData({subject, filters}){//获取db中的聊天记录
     let data = realm.objects(subject);
     if(filters){
       data = data.filtered('text like "%'+filters+'%"');
     }
-    console.log(data)
+    // data.map(item=>console.log(item))
     return data;
   }
-  addItemToDB({type, text}){//对话写入数据库
+  addItemToDB({id, type, text}){//对话写入数据库
     const { subject } = this.state;
-    let res = realm.create(this.mapping(subject), {
-      type, 
-      text
+    let res = realm.write(()=>{
+      realm.create(this.mapping(subject), {
+        id,
+        type, 
+        text
+      })
     });
-    console.log(res)
   }
   addMsg(msg){//添加一个dialog对话框
+    /////lock btn
     const { dialogs } = this.state
     if(typeof msg == 'string'){//处理用户发的消息
       msg = {
         type: 'user',
-        text: msg
+        text: msg,
+        id: parseInt(Math.random()*1000000)
       }
     }
     this.setState({
@@ -131,10 +138,29 @@ export default class IndexPage extends Component {
         this.getData(msg.text) 
         this.addMsg({
           type: 'teacher',
-          loading: true
+          loading: true,
+          text: '',
+          id: parseInt(Math.random()*1000000)
         })
       }
     }, 10);//layout获取的高度有延迟
+  }
+  updateDBMsg({type, id, text}){//改db记录
+    const { subject } = this.state
+    realm.write(()=>{
+      realm.create(this.mapping(subject), {type, id, text}, true);
+    })
+  }
+  getHistoryMsg(){//获取db中的记录
+    let { subject } = this.state
+    let datas = this.getDBData({subject: this.mapping(subject)});
+    let dialogs = [];
+    for (let {type, text, id} of datas) {
+      dialogs.push({type, text, id})
+    }
+    this.setState({
+      dialogs
+    });
   }
   openPicker(showStatus){//打开或关闭picker
     let { lastChosenSubject, subject } = this.state
@@ -145,12 +171,8 @@ export default class IndexPage extends Component {
       this.setState({
         lastChosenSubject: subject
       })
-    }else{//关闭picker时，如果当前选择的科目跟上次的一样，就不发新消息
-      // (lastChosenSubject != subject) && this.addMsg({
-      //   type: 'teacher',
-      //   text: `你好，我是${subject}老师，请问有什么可以帮到你？`,
-
-      // })
+    }else{//关闭picker时，获取历史消息记录
+      this.getHistoryMsg()
     }
   }
   changeTitle(subject){//切换学科
@@ -165,6 +187,7 @@ export default class IndexPage extends Component {
 
     dialog.loading = false
     dialog.text = val
+    this.updateDBMsg(dialog)
     this.setState({
       dialogs
     })
@@ -183,9 +206,13 @@ export default class IndexPage extends Component {
       this.cancelLoading(res.value)
 
     }catch(e){
-      console.log(e)
+      console.error(e)
       this.cancelLoading('我不明白你在说什么。请你换一种提问方式或检查网络连接是否正常。')
     }
+  }
+  pressSearch(){//搜索聊天记录
+    console.log(333)
+    this.props.navigation('Search', { name: 'Jane' });
   }
   mapping(subject){//中文学科名对应的英文，用于请求
     const subjectMap = {
@@ -263,13 +290,16 @@ export default class IndexPage extends Component {
   }
   render() {
     const { dialogs, list, subject, showStatus, marginBottom } = this.state
+    console.log(dialogs)
     return (
       <View style={styles.container}>
           <Head list={list} 
             subject={subject} 
             showStatus={showStatus} 
             onOpenPicker={this.openPicker.bind(this, !showStatus)} 
-            onChangeTitle={this.changeTitle}>
+            onChangeTitle={this.changeTitle}
+            onPressSearch={this.pressSearch}
+          >
           </Head>
           <ScrollView
             ref={this._captureRef}
