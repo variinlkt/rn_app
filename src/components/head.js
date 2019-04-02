@@ -47,10 +47,6 @@ export default class Head extends PureComponent {
                     animationType="fade"
                     transparent={true}
                     visible={showStatus}
-                    style={{
-                        borderWidth: 1,
-                        borderColor:'red'
-                    }}
                 >
                     <View style={styles.header}>
                         <Text style={styles.text}

@@ -4,6 +4,7 @@
  * @flow
  */
 
+import Realm from 'realm';
 import React, { Component } from 'react';
 import {
   StyleSheet,
@@ -16,6 +17,29 @@ import {
 import Head from './components/head';
 import Textbox from './components/textbox';
 import Dialog from './components/dialog';
+
+const subjects = [
+  "chinese",
+  "math",
+  "english",
+  "biology",
+  "history",
+  "geo",
+  "politics",
+  "physics",
+  "chemistry",
+]
+let schema = [];
+subjects.map(sub=>{
+  schema.push({
+    name: sub,
+    properties: {
+      type: 'string',
+      text: 'string',
+    }
+  })
+})
+let realm = new Realm({schema});
 
 export default class IndexPage extends Component {
   constructor(props){
@@ -37,7 +61,8 @@ export default class IndexPage extends Component {
         "物理",
         "化学"
       ],
-      marginBottom: 80
+      marginBottom: 80,
+      realm: null
     }
     this.changeTitle = this.changeTitle.bind(this)
     this.openPicker = this.openPicker.bind(this)
@@ -50,18 +75,43 @@ export default class IndexPage extends Component {
   }
   componentDidMount(){
     let { subject } = this.state
-    let timer = setTimeout(()=>{
-      this.addMsg({
-        type: 'teacher',
-        text: `你好，我是${subject}老师，请问有什么可以帮到你？`,
-        subject: this.mapping(subject)
-      })
-    },1000)
+    // let timer = setTimeout(()=>{
+    //   this.addMsg({
+    //     type: 'teacher',
+    //     text: `你好，我是${subject}老师，请问有什么可以帮到你？`,
+    //     subject: this.mapping(subject)
+    //   })
+    // },1000)
+    let data = this.getDBData({subject: this.mapping(subject)}) || [];
+    this.setState({
+      dialog: data
+    });
     //获取屏幕高度
     this.dimensionsHeight = Dimensions.get('window').height
     //监听键盘事件
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this._keyboardDidShow)
     this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this._keyboardDidHide)
+  }
+  clearScreen(){
+    this.setState({
+      dialog: []
+    });
+  }
+  getDBData({subject, filters}){//获取聊天记录
+    let data = realm.objects(subject);
+    if(filters){
+      data = data.filtered('text like "%'+filters+'%"');
+    }
+    console.log(data)
+    return data;
+  }
+  addItemToDB({type, text}){//对话写入数据库
+    const { subject } = this.state;
+    let res = realm.create(this.mapping(subject), {
+      type, 
+      text
+    });
+    console.log(res)
   }
   addMsg(msg){//添加一个dialog对话框
     const { dialogs } = this.state
@@ -74,6 +124,7 @@ export default class IndexPage extends Component {
     this.setState({
       dialogs: dialogs.concat(msg)
     })
+    this.addItemToDB(msg);
     let judegeTimer = setTimeout(()=>{
       this.judgeOffset()
       if(msg.type == 'user'){
@@ -95,11 +146,11 @@ export default class IndexPage extends Component {
         lastChosenSubject: subject
       })
     }else{//关闭picker时，如果当前选择的科目跟上次的一样，就不发新消息
-      (lastChosenSubject != subject) && this.addMsg({
-        type: 'teacher',
-        text: `你好，我是${subject}老师，请问有什么可以帮到你？`,
+      // (lastChosenSubject != subject) && this.addMsg({
+      //   type: 'teacher',
+      //   text: `你好，我是${subject}老师，请问有什么可以帮到你？`,
 
-      })
+      // })
     }
   }
   changeTitle(subject){//切换学科
