@@ -6,6 +6,8 @@
 
 import Realm from 'realm';
 import React, { Component } from 'react';
+import { createStackNavigator, createAppContainer } from 'react-navigation';
+
 import {
   StyleSheet,
   View,
@@ -16,8 +18,8 @@ import {
 } from 'react-native';
 import Head from './components/head';
 import Textbox from './components/textbox';
-import Dialog from './components/dialog';
-
+import Dialog from './components/item';
+import DialogText from './components/dialogText';
 const subjects = [
   "chinese",
   "math",
@@ -34,7 +36,7 @@ let schema = subjects.map(sub=>{
     name: sub,
     primaryKey: 'id',
     properties: {
-      id: 'int',
+      id: 'string',
       type: 'string',
       text: 'string',
     }
@@ -48,6 +50,9 @@ let realm = new Realm({
 //   realm.deleteAll()
 // })
 export default class IndexPage extends Component {
+  static navigationOptions = {
+    header: null,
+  };
   constructor(props){
     super(props)
     this.state = {
@@ -125,7 +130,7 @@ export default class IndexPage extends Component {
       msg = {
         type: 'user',
         text: msg,
-        id: parseInt(Math.random()*1000000)
+        id: parseInt(Math.random()*1000000)+''
       }
     }
     this.setState({
@@ -140,7 +145,7 @@ export default class IndexPage extends Component {
           type: 'teacher',
           loading: true,
           text: '',
-          id: parseInt(Math.random()*1000000)
+          id: parseInt(Math.random()*1000000)+''
         })
       }
     }, 10);//layout获取的高度有延迟
@@ -195,6 +200,7 @@ export default class IndexPage extends Component {
   async getData(msg){//发送请求
     try{
       let subject = this.mapping(this.state.subject)
+      console.log(subject, msg)
       let res = await this._fetchWithTimeout(fetch('http://166.111.68.66:8007/course/inputQuestion', {
         method: 'POST',
         headers: {
@@ -206,13 +212,14 @@ export default class IndexPage extends Component {
       this.cancelLoading(res.value)
 
     }catch(e){
-      console.error(e)
+      console.log(e)
       this.cancelLoading('我不明白你在说什么。请你换一种提问方式或检查网络连接是否正常。')
     }
   }
   pressSearch(){//搜索聊天记录
-    console.log(333)
-    this.props.navigation('Search', { name: 'Jane' });
+    this.props.navigation.push('Search', {
+      subject: this.state.subject
+    });
   }
   mapping(subject){//中文学科名对应的英文，用于请求
     const subjectMap = {
@@ -282,7 +289,7 @@ export default class IndexPage extends Component {
     this.setState({
       marginBottom: 80
     })
-    this.judgeOffsetWhenKeyboardHide()
+    // this.judgeOffsetWhenKeyboardHide()
 
   }
   _captureRef(ref){
@@ -309,10 +316,15 @@ export default class IndexPage extends Component {
           >
             <View 
             onLayout={this._onLayout}
+            style={{
+              marginBottom
+            }}
             >
               {
-                (dialogs.length > 0) && dialogs.map((item,index)=>(
-                  <Dialog avatarType={item.type} loading={item.loading} text={item.text} key={index+item.type}></Dialog>
+                (dialogs.length > 0) && dialogs.map((item)=>(
+                  <Dialog avatarType={item.type} key={item.id}>
+                    <DialogText text={item.text} loading={item.loading} type={item.type}></DialogText>
+                  </Dialog>
                 ))
               }
             </View>

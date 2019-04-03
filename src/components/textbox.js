@@ -19,16 +19,6 @@ export default class Textbox extends PureComponent {
     }
     onPressSend(){
         let {text} = this.state
-        if(!text.length){
-            return Alert.alert(
-                '注意',
-                '问题不能为空哦',
-                [
-                  {text: '好', onPress: () => console.log('OK Pressed')},
-                ],
-                { cancelable: false }
-            )
-        }
         this.props.onPress(text)
         this.setState({
             text: ''
@@ -49,13 +39,11 @@ export default class Textbox extends PureComponent {
                 onChangeText={this.onChangeText}
                 value={this.state.text}
                 placeholder="请输入问题"
+                blurOnSubmit={true}
+                returnKeyType="send"
+                enablesReturnKeyAutomatically={true}
+                onSubmitEditing={this.onPressSend}
             />
-            <TouchableOpacity
-                onPress={this.onPressSend}
-                style={styles.button}
-            >
-                <Text style={styles.buttonText}>发送</Text>
-            </TouchableOpacity>
         </View >
         );
     }
@@ -72,7 +60,8 @@ const styles = StyleSheet.create({
         paddingRight: 16,
         paddingBottom: 16,
         flexWrap: 'nowrap',
-        justifyContent: 'space-around',
+        justifyContent: 'center',
+        flexDirection: 'row'
     },
     textInput: {
         height: 40, 
@@ -86,18 +75,4 @@ const styles = StyleSheet.create({
         paddingLeft: 8,
         width: '80%'
     },
-    button: {
-        display: 'flex',
-        position: 'absolute',
-        right: 16,
-        bottom: 16,
-        paddingBottom: 12,
-        paddingRight: 6,
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    buttonText: {
-        fontSize: 20,
-        textAlign: 'center'
-    }
 });
