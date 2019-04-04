@@ -6,7 +6,7 @@
 
 import Realm from 'realm';
 import React, { PureComponent } from 'react';
-import { getDBData, mapping, decodeSearchResult } from './lib/lib'
+import { getDBData, mapping, decodeSearchResult, fetchWithTimeout } from './lib/lib'
 
 import {
   StyleSheet,
@@ -20,6 +20,7 @@ import Head from './components/head';
 import Textbox from './components/textbox';
 import Dialog from './components/item';
 import DialogText from './components/dialogText';
+
 const subjects = [
   "chinese",
   "math",
@@ -195,7 +196,7 @@ export default class IndexPage extends PureComponent {
   async getData(msg){//发送请求
     try{
       let subject = mapping(this.state.subject)
-      let res = await this._fetchWithTimeout(fetch('http://166.111.68.66:8007/course/inputQuestion', {
+      let res = await fetchWithTimeout(fetch('http://166.111.68.66:8007/course/inputQuestion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -220,16 +221,6 @@ export default class IndexPage extends PureComponent {
       marginBottom: height
     })
     setTimeout(()=>this._listRef.scrollToEnd(), 100)
-  }
-  _fetchWithTimeout(fetch, timeout=10000){//封装fetch，添加timeout
-    return Promise.race([
-      fetch,
-      new Promise((resolve, reject)=>{
-        let timer = setTimeout(() => {
-          reject('fetch timeout!')
-        }, timeout);
-      })
-    ])
   }
   _onLayout(e){//获取list的高度
     let { height } = e.nativeEvent.layout
