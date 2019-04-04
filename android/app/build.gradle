@@ -138,6 +138,8 @@ android {
 }
 
 dependencies {
+    implementation project(':rn-fetch-blob')
+    implementation project(':react-native-audio')
     implementation project(':react-native-gesture-handler')
     implementation project(':realm')
     implementation fileTree(dir: "libs", include: ["*.jar"])

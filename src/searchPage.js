@@ -29,17 +29,24 @@ export default class SearchPage extends PureComponent {
     this._seperator = this._seperator.bind(this);
   }
   onSubmitEditing({nativeEvent}){
-    const { navigation } = this.props
-    const subject = navigation.getParam('subject')
-    const datas = getDBData({
-      filters: nativeEvent.text,
-      realm: window.realm,
-      subject: mapping(subject)
-    });
-    const list = decodeSearchResult(datas);
-    this.setState({
-      list
-    });
+    //TODO: show loading toast
+    try{
+      const { navigation } = this.props
+      const subject = navigation.getParam('subject')
+      const datas = getDBData({
+        filters: nativeEvent.text,
+        realm: window.realm,
+        subject: mapping(subject)
+      });
+      //TODO: hide loading toast
+      const list = decodeSearchResult(datas);
+      this.setState({
+        list
+      });
+    }catch(e){
+      //TODO: hide loading toast
+      //TODO: show error toast
+    }
   }
   goBack(){
     this.props.navigation.goBack();

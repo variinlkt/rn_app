@@ -9,9 +9,11 @@
   "dependencies": {
     "react": "16.8.3",
     "react-native": "0.59.3",
+    "react-native-audio": "^4.3.0",
     "react-native-gesture-handler": "^1.1.0",
     "react-navigation": "^3.6.1",
-    "realm": "^2.25.0"
+    "realm": "^2.25.0",
+    "rn-fetch-blob": "^0.10.15"
   },
   "devDependencies": {
     "@babel/core": "^7.4.0",
