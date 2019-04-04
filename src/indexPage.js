@@ -86,7 +86,6 @@ export default class IndexPage extends Component {
     this._keyboardDidShow = this._keyboardDidShow.bind(this)
     this._keyboardDidHide = this._keyboardDidHide.bind(this)
     this._onLayout = this._onLayout.bind(this)
-    this.scrollToEnd = this.scrollToEnd.bind(this)
     this._renderItem = this._renderItem.bind(this)
     this._keyExtractor = this._keyExtractor.bind(this)
     this._renderFooterCmp = this._renderFooterCmp.bind(this)
@@ -129,7 +128,7 @@ export default class IndexPage extends Component {
     })
     this.addItemToDB(msg);
     let judegeTimer = setTimeout(()=>{
-      this.judgeOffset()
+      this.adjustView()
       if(msg.type == 'user'){
         this.getData(msg.text) 
         this.addMsg({
@@ -209,33 +208,11 @@ export default class IndexPage extends Component {
       subject: this.state.subject
     });
   }
-  judgeOffset(){//判断list是否需要偏移
-    let restHeight = this.dimensionsHeight - 80 - (this.keyboardHeight || 0) - 72
-    console.log('judge', restHeight,this.listHeight)//744 531
-    if(restHeight < this.listHeight){//list需要偏移
-      this.scrollToEnd()
-    }
-  }
-  judgeOffsetWhenKeyboardHide(){//判断list高度是否大于scrollview
-    let scrollViewHeight = this.dimensionsHeight - 160
-    let distance = this.listHeight - scrollViewHeight
-    if(distance > 0){
-      return this._listRef.scrollTo({
-        y: distance,
-        animated: true
-      })
-    }
-    this._listRef.scrollTo({
-      y: 0,
-      animated: true
+  adjustView(height){//处理键盘弹出和发送消息时,让list偏移的情况
+    (typeof height == 'number') && this.setState({
+      marginBottom: height
     })
-  }
-  scrollToEnd(){//处理键盘弹出和发送消息时,让list偏移的情况
-    let offset = 160+(this.keyboardHeight || 0)+this.listHeight-this.dimensionsHeight
-    this._listRef.scrollTo({
-      animated: true, 
-      y: offset
-    });
+    let timer = setTimeout(()=>this._listRef.scrollToEnd(), 100)
   }
   _fetchWithTimeout(fetch, timeout=10000){//封装fetch，添加timeout
     return Promise.race([
@@ -253,18 +230,14 @@ export default class IndexPage extends Component {
   }
   _keyboardDidShow(e){//键盘显示
     this.keyboardHeight = e && e.endCoordinates.height
-    this.setState({
-      marginBottom: this.keyboardHeight + 80
-    })
-    let timer = setTimeout(()=>this._listRef.scrollToEnd(), 100)
-    
+    this.adjustView(this.keyboardHeight + 72)
   }
   _keyboardDidHide(){//键盘收起
     this.keyboardHeight = 0
     this.setState({
       marginBottom: 0
     })
-    // this.judgeOffsetWhenKeyboardHide()
+    this.adjustView(72)
 
   }
   _captureRef(ref){
@@ -291,8 +264,7 @@ export default class IndexPage extends Component {
   }
   _keyExtractor = (item) => item.id;
   render() {
-    const { dialogs, list, subject, showStatus, marginBottom } = this.state
-    console.log(dialogs)
+    const { dialogs, list, subject, showStatus } = this.state
     return (
       <View style={styles.container}>
           <Head list={list} 
@@ -303,34 +275,11 @@ export default class IndexPage extends Component {
             onPressSearch={this.pressSearch}
           >
           </Head>
-          {/* <ScrollView
-            ref={this._captureRef}
-            style={{
-              marginBottom
-            }}
-          >
-            <View 
-            onLayout={this._onLayout}
-            style={{
-              marginBottom
-            }}
-            >
-              {
-                (dialogs.length > 0) && dialogs.map((item)=>(
-                  <Dialog avatarType={item.type} key={item.id}>
-                    <DialogText text={item.text} loading={item.loading} type={item.type}></DialogText>
-                  </Dialog>
-                ))
-              }
-            </View>
-          </ScrollView> */}
           <FlatList
             data={dialogs}
             renderItem={this._renderItem}
             keyExtractor={this._keyExtractor}
-            style={{
-              // marginBottom
-            }}
+            style={{}}
             ref={this._captureRef}
             ListFooterComponent={this._renderFooterCmp}
           ></FlatList>

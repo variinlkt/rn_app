@@ -39,7 +39,7 @@ export default class Textbox extends PureComponent {
                 onChangeText={this.onChangeText}
                 value={this.state.text}
                 placeholder="请输入问题"
-                blurOnSubmit={true}
+                blurOnSubmit={false}
                 returnKeyType="send"
                 enablesReturnKeyAutomatically={true}
                 onSubmitEditing={this.onPressSend}
