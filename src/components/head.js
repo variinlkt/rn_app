@@ -7,7 +7,9 @@ import HeadPicker from './headPicker';
 import HeadTitle from './headTitle';
 const styles = StyleSheet.create({
     container:{
-        position:'relative'
+        position:'relative',
+        backgroundColor: 'red',
+
     },
     header: {
         height: 88,

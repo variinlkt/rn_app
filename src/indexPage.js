@@ -7,6 +7,7 @@
 import Realm from 'realm';
 import React, { Component } from 'react';
 import { createStackNavigator, createAppContainer } from 'react-navigation';
+import { getDBData, mapping, decodeSearchResult } from './lib/lib'
 
 import {
   StyleSheet,
@@ -14,7 +15,8 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   Dimensions,
-  ScrollView
+  ScrollView,
+  FlatList
 } from 'react-native';
 import Head from './components/head';
 import Textbox from './components/textbox';
@@ -46,6 +48,7 @@ let realm = new Realm({
   schema,
   deleteRealmIfMigrationNeeded: true
 });
+window.realm = realm;
 // realm.write(()=>{
 //   realm.deleteAll()
 // })
@@ -84,15 +87,11 @@ export default class IndexPage extends Component {
     this._keyboardDidHide = this._keyboardDidHide.bind(this)
     this._onLayout = this._onLayout.bind(this)
     this.scrollToEnd = this.scrollToEnd.bind(this)
+    this._renderItem = this._renderItem.bind(this)
+    this._keyExtractor = this._keyExtractor.bind(this)
+    this._renderFooterCmp = this._renderFooterCmp.bind(this)
   }
   componentDidMount(){
-    // let timer = setTimeout(()=>{
-    //   this.addMsg({
-    //     type: 'teacher',
-    //     text: `你好，我是${subject}老师，请问有什么可以帮到你？`,
-    //     subject: this.mapping(subject)
-    //   })
-    // },1000)
     this.getHistoryMsg()
     //获取屏幕高度
     this.dimensionsHeight = Dimensions.get('window').height
@@ -105,18 +104,10 @@ export default class IndexPage extends Component {
       dialog: []
     });
   }
-  getDBData({subject, filters}){//获取db中的聊天记录
-    let data = realm.objects(subject);
-    if(filters){
-      data = data.filtered('text like "%'+filters+'%"');
-    }
-    // data.map(item=>console.log(item))
-    return data;
-  }
   addItemToDB({id, type, text}){//对话写入数据库
     const { subject } = this.state;
     let res = realm.write(()=>{
-      realm.create(this.mapping(subject), {
+      realm.create(mapping(subject), {
         id,
         type, 
         text
@@ -153,16 +144,13 @@ export default class IndexPage extends Component {
   updateDBMsg({type, id, text}){//改db记录
     const { subject } = this.state
     realm.write(()=>{
-      realm.create(this.mapping(subject), {type, id, text}, true);
+      realm.create(mapping(subject), {type, id, text}, true);
     })
   }
   getHistoryMsg(){//获取db中的记录
     let { subject } = this.state
-    let datas = this.getDBData({subject: this.mapping(subject)});
-    let dialogs = [];
-    for (let {type, text, id} of datas) {
-      dialogs.push({type, text, id})
-    }
+    let datas = getDBData({subject: mapping(subject), realm});
+    const dialogs = decodeSearchResult(datas);
     this.setState({
       dialogs
     });
@@ -199,7 +187,7 @@ export default class IndexPage extends Component {
   }
   async getData(msg){//发送请求
     try{
-      let subject = this.mapping(this.state.subject)
+      let subject = mapping(this.state.subject)
       console.log(subject, msg)
       let res = await this._fetchWithTimeout(fetch('http://166.111.68.66:8007/course/inputQuestion', {
         method: 'POST',
@@ -220,20 +208,6 @@ export default class IndexPage extends Component {
     this.props.navigation.push('Search', {
       subject: this.state.subject
     });
-  }
-  mapping(subject){//中文学科名对应的英文，用于请求
-    const subjectMap = {
-      "语文": "chinese",
-      "数学": "math",
-      "英语": "english",
-      "生物": "biology",
-      "历史": "history",
-      "地理": "geo",
-      "政治": "politics",
-      "物理": "physics",
-      "化学": "chemistry",
-    }
-    return subjectMap[subject]
   }
   judgeOffset(){//判断list是否需要偏移
     let restHeight = this.dimensionsHeight - 80 - (this.keyboardHeight || 0) - 72
@@ -282,12 +256,13 @@ export default class IndexPage extends Component {
     this.setState({
       marginBottom: this.keyboardHeight + 80
     })
-    this.judgeOffset()
+    let timer = setTimeout(()=>this._listRef.scrollToEnd(), 100)
+    
   }
   _keyboardDidHide(){//键盘收起
     this.keyboardHeight = 0
     this.setState({
-      marginBottom: 80
+      marginBottom: 0
     })
     // this.judgeOffsetWhenKeyboardHide()
 
@@ -295,6 +270,26 @@ export default class IndexPage extends Component {
   _captureRef(ref){
     this._listRef = ref
   }
+  _renderFooterCmp(){
+    let {marginBottom} = this.state
+    return(
+      <View style={{
+        height: marginBottom
+      }}
+      >
+      </View>
+    )
+  }
+  _renderItem({item}){
+    return(
+      <View style={styles.item}>
+        <Dialog avatarType={item.type} key={item.id}>
+          <DialogText text={item.text} loading={item.loading} type={item.type}></DialogText>
+        </Dialog>
+      </View>
+    )
+  }
+  _keyExtractor = (item) => item.id;
   render() {
     const { dialogs, list, subject, showStatus, marginBottom } = this.state
     console.log(dialogs)
@@ -308,7 +303,7 @@ export default class IndexPage extends Component {
             onPressSearch={this.pressSearch}
           >
           </Head>
-          <ScrollView
+          {/* <ScrollView
             ref={this._captureRef}
             style={{
               marginBottom
@@ -328,7 +323,17 @@ export default class IndexPage extends Component {
                 ))
               }
             </View>
-          </ScrollView>
+          </ScrollView> */}
+          <FlatList
+            data={dialogs}
+            renderItem={this._renderItem}
+            keyExtractor={this._keyExtractor}
+            style={{
+              // marginBottom
+            }}
+            ref={this._captureRef}
+            ListFooterComponent={this._renderFooterCmp}
+          ></FlatList>
           <KeyboardAvoidingView behavior='position' style={styles.textbox}>
 
             <Textbox style={styles.textbox}

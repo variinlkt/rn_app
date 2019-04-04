@@ -10,6 +10,8 @@ import {
 import HeadSearch from './components/headSearch';
 import ResultText from './components/resultText';
 import Item from './components/item';
+import { getDBData, mapping, decodeSearchResult } from './lib/lib'
+
 
 export default class SearchPage extends PureComponent {
   static navigationOptions = {
@@ -20,21 +22,6 @@ export default class SearchPage extends PureComponent {
     this.state = {
       test:'000000',
       list: [
-        {
-          type: 'user',
-          text: '爱上飞机搜集奥斯丁金佛寺金服水电费建瓯市金佛山地山东飞机欧司董事搜地金佛寺大放送',
-          id: '212121'///key should be a string
-        },
-        {
-          type: 'user',
-          text: 'hihihih',
-          id:'23432'
-        },
-        {
-          type: 'teacher',
-          text: 'hihihih',
-          id:'23432'
-        }
       ]
     }
     this.goBack = this.goBack.bind(this);
@@ -48,10 +35,20 @@ export default class SearchPage extends PureComponent {
   goBack(){
     this.props.navigation.goBack();
   }
-  onSubmitEditing(){
+  onSubmitEditing({nativeEvent}){
+    const { navigation } = this.props
+    const subject = navigation.getParam('subject')
+    console.log(nativeEvent.text)
+    const datas = getDBData({
+      filters: nativeEvent.text,
+      realm: window.realm,
+      subject: mapping(subject)
+    });
+    const list = decodeSearchResult(datas);
+    console.log(list)
     this.setState({
-      test:'99999'
-    })
+      list
+    });
   }
   onBlur(){
     this.setState({

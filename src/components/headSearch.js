@@ -23,7 +23,9 @@ const styles = StyleSheet.create({
       justifyContent: 'space-around',
       paddingBottom: 8,
       paddingLeft: 16,
-      paddingRight: 16
+      paddingRight: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: "rgba(0,0,0,.1)"
   },
   text: {
       textAlign: 'center',

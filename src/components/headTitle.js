@@ -8,14 +8,13 @@ import {
 } from 'react-native';
 
 const styles = StyleSheet.create({
-    container:{
-        position:'relative'
-    },
     header: {
         height: 88,
         backgroundColor: '#fff',
         zIndex: 100,
         position: 'relative',
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(0,0,0,.1)"
     },
     text: {
         textAlign: 'center',
