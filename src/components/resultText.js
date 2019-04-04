@@ -23,7 +23,6 @@ export default class ResultText extends PureComponent {
             <View style={styles.box}>
                 <Text
                     ellipsizeMode="tail"
-                    numberOfLines={2}
                     style={{
                         textAlign: type == 'user' ? 'right' : 'left'
                     }}

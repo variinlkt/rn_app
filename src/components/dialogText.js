@@ -10,13 +10,10 @@ const styles = StyleSheet.create({
     container:{
         marginLeft: 10,
         marginRight: 10,
-        maxWidth: '80%',
-        // borderColor: '#000',
-        // borderWidth: 1
+        maxWidth: '76%',
     },
     box: {
         maxWidth: '100%',
-        // height: 50,
         position: 'relative',
         borderRadius: 10,
         padding: 10,

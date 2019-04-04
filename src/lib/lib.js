@@ -23,8 +23,8 @@ export function mapping(subject){//中文学科名对应的英文，用于请求
 
 export function decodeSearchResult(datas){
     let dialogs = [];
-    for (let {type, text, id} of datas) {
-      dialogs.push({type, text, id})
+    for (let {type, text, id, idx} of datas) {
+      dialogs.push({type, text, id, idx})
     }
     return dialogs;
 }

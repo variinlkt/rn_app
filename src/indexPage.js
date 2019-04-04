@@ -5,8 +5,7 @@
  */
 
 import Realm from 'realm';
-import React, { Component } from 'react';
-import { createStackNavigator, createAppContainer } from 'react-navigation';
+import React, { PureComponent } from 'react';
 import { getDBData, mapping, decodeSearchResult } from './lib/lib'
 
 import {
@@ -15,7 +14,6 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   Dimensions,
-  ScrollView,
   FlatList
 } from 'react-native';
 import Head from './components/head';
@@ -38,6 +36,7 @@ let schema = subjects.map(sub=>{
     name: sub,
     primaryKey: 'id',
     properties: {
+      idx: 'int',
       id: 'string',
       type: 'string',
       text: 'string',
@@ -52,7 +51,7 @@ window.realm = realm;
 // realm.write(()=>{
 //   realm.deleteAll()
 // })
-export default class IndexPage extends Component {
+export default class IndexPage extends PureComponent {
   static navigationOptions = {
     header: null,
   };
@@ -76,7 +75,7 @@ export default class IndexPage extends Component {
         "化学"
       ],
       marginBottom: 80,
-      realm: null
+      realm: null,
     }
     this.changeTitle = this.changeTitle.bind(this)
     this.openPicker = this.openPicker.bind(this)
@@ -103,24 +102,27 @@ export default class IndexPage extends Component {
       dialog: []
     });
   }
-  addItemToDB({id, type, text}){//对话写入数据库
+  addItemToDB({id, type, text, idx}){//对话写入数据库
     const { subject } = this.state;
     let res = realm.write(()=>{
       realm.create(mapping(subject), {
         id,
+        idx,
         type, 
-        text
+        text,
       })
     });
   }
   addMsg(msg){//添加一个dialog对话框
     /////lock btn
     const { dialogs } = this.state
+    let len = dialogs.length
     if(typeof msg == 'string'){//处理用户发的消息
       msg = {
         type: 'user',
         text: msg,
-        id: parseInt(Math.random()*1000000)+''
+        id: parseInt(Math.random()*1000000)+'',
+        idx: len
       }
     }
     this.setState({
@@ -135,15 +137,21 @@ export default class IndexPage extends Component {
           type: 'teacher',
           loading: true,
           text: '',
-          id: parseInt(Math.random()*1000000)+''
+          id: parseInt(Math.random()*1000000)+'',
+          idx: len+1
         })
       }
     }, 10);//layout获取的高度有延迟
   }
-  updateDBMsg({type, id, text}){//改db记录
+  updateDBMsg({type, id, text, idx}){//改db记录
     const { subject } = this.state
     realm.write(()=>{
-      realm.create(mapping(subject), {type, id, text}, true);
+      realm.create(mapping(subject), {
+        type, 
+        id, 
+        text,
+        idx
+      }, true);
     })
   }
   getHistoryMsg(){//获取db中的记录
@@ -187,7 +195,6 @@ export default class IndexPage extends Component {
   async getData(msg){//发送请求
     try{
       let subject = mapping(this.state.subject)
-      console.log(subject, msg)
       let res = await this._fetchWithTimeout(fetch('http://166.111.68.66:8007/course/inputQuestion', {
         method: 'POST',
         headers: {
@@ -212,7 +219,7 @@ export default class IndexPage extends Component {
     (typeof height == 'number') && this.setState({
       marginBottom: height
     })
-    let timer = setTimeout(()=>this._listRef.scrollToEnd(), 100)
+    setTimeout(()=>this._listRef.scrollToEnd(), 100)
   }
   _fetchWithTimeout(fetch, timeout=10000){//封装fetch，添加timeout
     return Promise.race([
@@ -234,9 +241,6 @@ export default class IndexPage extends Component {
   }
   _keyboardDidHide(){//键盘收起
     this.keyboardHeight = 0
-    this.setState({
-      marginBottom: 0
-    })
     this.adjustView(72)
 
   }
@@ -319,7 +323,7 @@ const styles = StyleSheet.create({
   avoidingView: {
     height: '100%',
     borderColor:'#000',
-    borderWidth:1
+    borderWidth: 1
   }
 });
 

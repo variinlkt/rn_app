@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   FlatList,
-  Text,
   TouchableWithoutFeedback,
   TouchableHighlight
 } from 'react-native';
@@ -20,40 +19,27 @@ export default class SearchPage extends PureComponent {
   constructor(props){
     super(props);
     this.state = {
-      test:'000000',
       list: [
       ]
     }
     this.goBack = this.goBack.bind(this);
     this.onSubmitEditing = this.onSubmitEditing.bind(this);
-    this.onBlur = this.onBlur.bind(this);
     this._renderItem = this._renderItem.bind(this);
-    this._onPress = this._onPress.bind(this);
     this._keyExtractor = this._keyExtractor.bind(this);
     this._seperator = this._seperator.bind(this);
-  }
-  goBack(){
-    this.props.navigation.goBack();
   }
   onSubmitEditing({nativeEvent}){
     const { navigation } = this.props
     const subject = navigation.getParam('subject')
-    console.log(nativeEvent.text)
     const datas = getDBData({
       filters: nativeEvent.text,
       realm: window.realm,
       subject: mapping(subject)
     });
     const list = decodeSearchResult(datas);
-    console.log(list)
     this.setState({
       list
     });
-  }
-  onBlur(){
-    this.setState({
-      test:'88888'
-    })
   }
   goBack(){
     this.props.navigation.goBack();
@@ -61,7 +47,6 @@ export default class SearchPage extends PureComponent {
   _renderItem({item}){
     return(
       <TouchableHighlight
-        onPress={() => this._onPress(item)}
         key={item.id}
       > 
         <View style={styles.item}>
@@ -71,9 +56,6 @@ export default class SearchPage extends PureComponent {
         </View>
       </TouchableHighlight>
     )
-  }
-  _onPress(item){
-    console.log(item)
   }
   _keyExtractor = (item) => item.id;
   _seperator = () => (
@@ -93,7 +75,7 @@ export default class SearchPage extends PureComponent {
           onPressCancel={this.goBack}
         >
         </HeadSearch>
-        <TouchableWithoutFeedback onPress={this.onBlur} style={styles.content}>
+        <TouchableWithoutFeedback style={styles.content}>
           <FlatList
             data={list}
             renderItem={this._renderItem}
