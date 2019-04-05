@@ -9,6 +9,7 @@ import {
 import { AudioRecorder, AudioUtils } from 'react-native-audio';
 import RNFetchBlob from 'rn-fetch-blob'
 import AsyncStorage from "@react-native-community/async-storage"
+import Toast from './toast';
 
 export default class Textbox extends PureComponent {
     constructor(props){
@@ -18,32 +19,57 @@ export default class Textbox extends PureComponent {
             audioPath: AudioUtils.DocumentDirectoryPath + '/test.lpcm',
             token: '',
             audioFileSize: 0,
-            audioFileURL: ''
+            audioFileURL: '',
+            toastType: 'loading',
+            toastDuration: null,
+            toastMsg: '',
+            toastVisible: false
         }
         this.onPressSend = this.onPressSend.bind(this)
         this.onChangeText = this.onChangeText.bind(this)
         this.record = this.record.bind(this)
+        this.hideToast = this.hideToast.bind(this)
+        this.stopRecord = this.stopRecord.bind(this)
     }
     componentDidMount(){
         this.getToken()
+        this.showToast({
+            msg: '录音初始化失败',
+            type: 'loading',
+            duration: 3000
+        })
         AudioRecorder.requestAuthorization().then((isAuthorised) => {
             if (!isAuthorised) {
-                //TODO: error toast 录音初始化失败
-                 
+                this.showToast({
+                    msg: '录音初始化失败',
+                    type: 'error',
+                    duration: 3000
+                })
                 return;
             }
             this._prepareRecordingPath(this.state.audioPath);
     
             AudioRecorder.onProgress = (data) => {
-                //TODO: recording toast：录音中
+                this.showToast({
+                    msg: '录音中',
+                    type: 'recording',
+                })
             };
     
             AudioRecorder.onFinished = ({status, audioFileURL, audioFileSize}) => {
                 if(audioFileSize < 20000){
-                //TODO: error toast:录音时长过短
+                    this.showToast({
+                        msg: '录音时长过短',
+                        type: 'error',
+                        duration: 3000
+
+                    })
                     return
                 }
-                //TODO: loading toast
+                this.showToast({
+                    msg: '翻译中',
+                    type: 'loading',
+                })
                 this.setState({
                     audioFileURL,
                     audioFileSize
@@ -51,6 +77,19 @@ export default class Textbox extends PureComponent {
                 this.uploadFile(audioFileURL, audioFileSize)
             };
         });
+    }
+    showToast({msg, type, duration=null}){
+        this.setState({
+            toastVisible: true,
+            toastMsg: msg,
+            toastType: type,
+            toastDuration: duration
+        })
+    }
+    hideToast(){
+        this.setState({
+            toastVisible: false
+        })
     }
     async getToken(){//获取access token
         try {
@@ -64,8 +103,13 @@ export default class Textbox extends PureComponent {
                 token: value
             })
         } catch (error) {
-            //TODO: hide loading toast
             // TODO: toast get token error
+            this.showToast({
+                msg: '获取token失败',
+                type: 'error',
+                duration: 3000
+
+            })
             console.log(error)
         }
     }
@@ -80,65 +124,82 @@ export default class Textbox extends PureComponent {
             let filePath = `${dirs.DocumentDir}/${arr[arr.length - 1]}`
             return filePath
         }catch(e){
-            //TODO: hide loading toast
-            // TODO: toast record error
+            this.showToast({
+                msg: '获取录音失败',
+                type: 'error',
+                duration: 3000
+
+            })
             console.log(e)
         }
     }
     async uploadFile(path, fileSize){//上传文件
-        try{
-            let filePath = this.getAudioPath(path)
-            RNFetchBlob.fs.readFile(filePath, 'base64').then(audioData=>{
-                RNFetchBlob.fetch('POST', 'https://vop.baidu.com/pro_api', {
-                    'Content-Type' : 'application/json',
-                }, JSON.stringify({
-                    "format":"pcm",
-                    "rate":16000,
-                    "dev_pid":80001,
-                    "channel":1,
-                    "token":this.state.token,
-                    "cuid":"lamhoit_rn_project",
-                    "len":fileSize,
-                    "speech":audioData, 
-                }))
-                .then((resp) => {
-                    this.handleData(resp.data)
-                })
-                .catch((err) => {
-                    //TODO: hide loading toast
-                    // TODO: toast network error
-                    console.log(err)
-                })
-            }).catch(e=>{
-                //TODO: hide loading toast
-                    // TODO: toast network error
-                console.log(e)
+        let filePath = this.getAudioPath(path)
+        RNFetchBlob.fs.readFile(filePath, 'base64').then(audioData=>{
+            RNFetchBlob.fetch('POST', 'https://vop.baidu.com/pro_api', {
+                'Content-Type' : 'application/json',
+            }, JSON.stringify({
+                "format":"pcm",
+                "rate":16000,
+                "dev_pid":80001,
+                "channel":1,
+                "token":this.state.token,
+                "cuid":"lamhoit_rn_project",
+                "len":fileSize,
+                "speech":audioData, 
+            }))
+            .then((resp) => {
+                this.handleData(resp.data)
             })
+            .catch((err) => {
+                this.showToast({
+                    msg: '上传录音失败',
+                    type: 'error',
+                    duration: 3000
+    
+                })
+                console.log(err)
+            })
+        }).catch(e=>{
+            this.showToast({
+                msg: '录音编码失败',
+                type: 'error',
+                duration: 3000
 
-        }catch(e){
+            })
             console.log(e)
-        }
+        })
     }
     async handleData(data){//根据不同errno处理数据
         const{ audioFileURL, audioFileSize } = this.state
         data = JSON.parse(data);
-        //TODO: hide loading toast
         switch(data.err_no){
             case 0://成功
                 this.showResult(data.result[0])
-                //TODO: success toast
+                this.showToast({
+                    msg: '翻译完成',
+                    type: 'success',
+                    duration: 1000
+                })
                 break;
             case 3301://空白语音
-                //TODO: error toast - blank audio or low audio quality
+                this.showToast({
+                    msg: '空白录音',
+                    type: 'error',
+                    duration: 3000
+                })
                 break;
             case 3302://鉴权失败
-                //authorization error
                 await AsyncStorage.setItem('token', null)
                 await this.getToken()
                 this.uploadFile(audioFileURL, audioFileSize)
                 break;
             default://其他问题
-                //TODO: error toast - audio api network error, error code:
+                this.showToast({
+                    msg: '翻译接口错误',
+                    type: 'error',
+                    duration: 3000
+                })
                 console.log('error code:'+data.err_no)
                 break;
         }
@@ -169,18 +230,25 @@ export default class Textbox extends PureComponent {
         })
     }
     async record(){
-        //TODO: show recording toast
         try {
-
+            this.showToast({
+                msg: '录音中',
+                type: 'recording',
+            })
             const filePath = await AudioRecorder.startRecording();
         } catch (error) {
             console.log(error);
-            //TODO: err toast : record init fail
+            this.showToast({
+                msg: '录音失败',
+                type: 'error',
+                duration: 3000
+
+            })
         }
     }
     async stopRecord(){
-        //TODO: hide recording toast
         try {
+            this.hideToast()
             const filePath = await AudioRecorder.stopRecording();
             return filePath;
           } catch (error) {
@@ -189,28 +257,41 @@ export default class Textbox extends PureComponent {
 
     }
     render() {
+        const { toastType, toastMsg, toastVisible, toastDuration } = this.state
         return (
-        <View style={[styles.textbox, {
-            // bottom: 0,
-        }]}>
-            <TouchableOpacity onLongPress={this.record} onPressOut={this.stopRecord}
-            >
-                <Image
-                    style={styles.icon}
-                    source={require('../assets/img/audio.png')}
-                />
-            </TouchableOpacity>
-            <TextInput
-                style={styles.textInput}
-                onChangeText={this.onChangeText}
-                value={this.state.text}
-                placeholder="请输入问题"
-                blurOnSubmit={false}
-                returnKeyType="send"
-                enablesReturnKeyAutomatically={true}
-                onSubmitEditing={this.onPressSend}
-            />
-        </View >
+            <View>
+                <Toast
+                    type={toastType}
+                    duration={toastDuration}
+                    msg={toastMsg}
+                    visible={toastVisible}
+                    handleHideToast={this.hideToast}
+                >
+                </Toast>
+                <View style={[styles.textbox, {
+                    // bottom: 0,
+                }]}>
+                    <TouchableOpacity 
+                        onLongPress={this.record} 
+                        onPressOut={this.stopRecord}
+                    >
+                        <Image
+                            style={styles.icon}
+                            source={require('../assets/img/audio.png')}
+                        />
+                    </TouchableOpacity>
+                    <TextInput
+                        style={styles.textInput}
+                        onChangeText={this.onChangeText}
+                        value={this.state.text}
+                        placeholder="请输入问题"
+                        blurOnSubmit={false}
+                        returnKeyType="send"
+                        enablesReturnKeyAutomatically={true}
+                        onSubmitEditing={this.onPressSend}
+                    />
+                </View >
+            </View>
         );
     }
 }

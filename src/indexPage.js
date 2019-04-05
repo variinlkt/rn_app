@@ -182,8 +182,6 @@ export default class IndexPage extends Component {
     })
   }
   cancelLoading(val = '老师也不知道答案哦。', idx){//获取答案后关闭loading态
-    console.log(val)
-
     let { dialogs } = this.state,
       len = dialogs.length - 1
       dialog = dialogs[len]
@@ -193,7 +191,7 @@ export default class IndexPage extends Component {
     this.setState({
       dialogs
     })
-    // this.updateDBMsg(dialog)
+    this.updateDBMsg(dialog)
   }
   async getData(msg, idx){//发送请求
     try{
