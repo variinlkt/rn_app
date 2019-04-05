@@ -9,7 +9,6 @@ import {
 import { AudioRecorder, AudioUtils } from 'react-native-audio';
 import RNFetchBlob from 'rn-fetch-blob'
 import AsyncStorage from "@react-native-community/async-storage"
-// import { getToken } from '../lib/lib'
 
 export default class Textbox extends PureComponent {
     constructor(props){
@@ -17,7 +16,9 @@ export default class Textbox extends PureComponent {
         this.state = {
             text: '',
             audioPath: AudioUtils.DocumentDirectoryPath + '/test.lpcm',
-            token: ''
+            token: '',
+            audioFileSize: 0,
+            audioFileURL: ''
         }
         this.onPressSend = this.onPressSend.bind(this)
         this.onChangeText = this.onChangeText.bind(this)
@@ -26,26 +27,32 @@ export default class Textbox extends PureComponent {
     componentDidMount(){
         this.getToken()
         AudioRecorder.requestAuthorization().then((isAuthorised) => {
-            // this.setState({ hasPermission: isAuthorised });
-            if (!isAuthorised) return;
-    
+            if (!isAuthorised) {
+                //TODO: error toast 录音初始化失败
+                 
+                return;
+            }
             this._prepareRecordingPath(this.state.audioPath);
     
             AudioRecorder.onProgress = (data) => {
-                console.log('recording')
-                //TODO: feedback to toast
-              console.log(data)
+                //TODO: recording toast：录音中
             };
     
             AudioRecorder.onFinished = ({status, audioFileURL, audioFileSize}) => {
-                console.log('finish')
-
-                //TODO: read and upload file
-                this.uploadFile(audioFileURL)
+                if(audioFileSize < 20000){
+                //TODO: error toast:录音时长过短
+                    return
+                }
+                //TODO: loading toast
+                this.setState({
+                    audioFileURL,
+                    audioFileSize
+                })
+                this.uploadFile(audioFileURL, audioFileSize)
             };
         });
     }
-    async getToken(){
+    async getToken(){//获取access token
         try {
             const value = await AsyncStorage.getItem('token');
             if (value == null) {
@@ -57,11 +64,12 @@ export default class Textbox extends PureComponent {
                 token: value
             })
         } catch (error) {
-            // Error retrieving data
-            console.error(error)
+            //TODO: hide loading toast
+            // TODO: toast get token error
+            console.log(error)
         }
     }
-    getAudioPath(fileUri){
+    getAudioPath(fileUri){//获取录音存储路径
         //On iOS platform the directory path will be changed 
         //every time you access to the file system. 
         //So if you need read file on iOS, 
@@ -72,31 +80,75 @@ export default class Textbox extends PureComponent {
             let filePath = `${dirs.DocumentDir}/${arr[arr.length - 1]}`
             return filePath
         }catch(e){
-            console.error(e)
+            //TODO: hide loading toast
+            // TODO: toast record error
+            console.log(e)
         }
     }
-    formatUrl(){
-        let base = 'https://vop.baidu.com/pro_api'
-        let dev_pid = 80001
-        let cuid = 'lamhoit_rn_project'
-        let token = this.state.token
-        return `${base}?dev_pid=${dev_pid}&cuid=${cuid}&token=${token}`
-    }
-    async uploadFile(path){
+    async uploadFile(path, fileSize){//上传文件
         try{
             let filePath = this.getAudioPath(path)
-            let url = this.formatUrl()
-            let res = await RNFetchBlob.fetch('POST', url, {
-                'format': 'pcm',
-                'rate': 16000,
-                'Content-Type' : 'audio/pcm;rate=16000',
-            }, RNFetchBlob.wrap(filePath))
-            console.log(res.info().status)
+            RNFetchBlob.fs.readFile(filePath, 'base64').then(audioData=>{
+                RNFetchBlob.fetch('POST', 'https://vop.baidu.com/pro_api', {
+                    'Content-Type' : 'application/json',
+                }, JSON.stringify({
+                    "format":"pcm",
+                    "rate":16000,
+                    "dev_pid":80001,
+                    "channel":1,
+                    "token":this.state.token,
+                    "cuid":"lamhoit_rn_project",
+                    "len":fileSize,
+                    "speech":audioData, 
+                }))
+                .then((resp) => {
+                    this.handleData(resp.data)
+                })
+                .catch((err) => {
+                    //TODO: hide loading toast
+                    // TODO: toast network error
+                    console.log(err)
+                })
+            }).catch(e=>{
+                //TODO: hide loading toast
+                    // TODO: toast network error
+                console.log(e)
+            })
+
         }catch(e){
-            console.error(e)
+            console.log(e)
         }
     }
-    _prepareRecordingPath(audioPath){
+    async handleData(data){//根据不同errno处理数据
+        const{ audioFileURL, audioFileSize } = this.state
+        data = JSON.parse(data);
+        //TODO: hide loading toast
+        switch(data.err_no){
+            case 0://成功
+                this.showResult(data.result[0])
+                //TODO: success toast
+                break;
+            case 3301://空白语音
+                //TODO: error toast - blank audio or low audio quality
+                break;
+            case 3302://鉴权失败
+                //authorization error
+                await AsyncStorage.setItem('token', null)
+                await this.getToken()
+                this.uploadFile(audioFileURL, audioFileSize)
+                break;
+            default://其他问题
+                //TODO: error toast - audio api network error, error code:
+                console.log('error code:'+data.err_no)
+                break;
+        }
+    }
+    showResult(result){//显示翻译
+        this.setState({
+            text: result
+        })
+    }
+    _prepareRecordingPath(audioPath){//录音配置
         AudioRecorder.prepareRecordingAtPath(audioPath, {
             SampleRate: 16000,
             Channels: 1,
@@ -104,7 +156,7 @@ export default class Textbox extends PureComponent {
             AudioEncoding: "lpcm"
         });
     }
-    onPressSend(){
+    onPressSend(){//发送问题
         let {text} = this.state
         this.props.onPress(text)
         this.setState({
@@ -119,21 +171,18 @@ export default class Textbox extends PureComponent {
     async record(){
         //TODO: show recording toast
         try {
-            console.log('begin')
             const filePath = await AudioRecorder.startRecording();
         } catch (error) {
-            console.error(error);
+            console.log(error);
         }
     }
     async stopRecord(){
         //TODO: hide recording toast
         try {
-            console.log('end')
-
             const filePath = await AudioRecorder.stopRecording();
             return filePath;
           } catch (error) {
-            console.error(error);
+            console.log(error);
           }
 
     }
