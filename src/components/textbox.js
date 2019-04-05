@@ -67,7 +67,7 @@ export default class Textbox extends PureComponent {
                     return
                 }
                 this.showToast({
-                    msg: '翻译中',
+                    msg: '转换文字中',
                     type: 'loading',
                 })
                 this.setState({
@@ -177,7 +177,7 @@ export default class Textbox extends PureComponent {
             case 0://成功
                 this.showResult(data.result[0])
                 this.showToast({
-                    msg: '翻译完成',
+                    msg: '转换完成',
                     type: 'success',
                     duration: 1000
                 })
@@ -196,7 +196,7 @@ export default class Textbox extends PureComponent {
                 break;
             default://其他问题
                 this.showToast({
-                    msg: '翻译接口错误',
+                    msg: '转换接口错误',
                     type: 'error',
                     duration: 3000
                 })
