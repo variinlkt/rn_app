@@ -171,9 +171,11 @@ export default class Textbox extends PureComponent {
     async record(){
         //TODO: show recording toast
         try {
+
             const filePath = await AudioRecorder.startRecording();
         } catch (error) {
             console.log(error);
+            //TODO: err toast : record init fail
         }
     }
     async stopRecord(){

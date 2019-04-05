@@ -5,7 +5,7 @@
  */
 
 import Realm from 'realm';
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import { getDBData, mapping, decodeSearchResult, fetchWithTimeout } from './lib/lib'
 
 import {
@@ -52,7 +52,7 @@ window.realm = realm;
 // realm.write(()=>{
 //   realm.deleteAll()
 // })
-export default class IndexPage extends PureComponent {
+export default class IndexPage extends Component {
   static navigationOptions = {
     header: null,
   };
@@ -133,7 +133,7 @@ export default class IndexPage extends PureComponent {
     let judegeTimer = setTimeout(()=>{
       this.adjustView()
       if(msg.type == 'user'){
-        this.getData(msg.text) 
+        this.getData(msg.text, msg.idx) 
         this.addMsg({
           type: 'teacher',
           loading: true,
@@ -181,19 +181,21 @@ export default class IndexPage extends PureComponent {
       subject
     })
   }
-  cancelLoading(val = '老师也不知道答案哦。'){//获取答案后关闭loading态
+  cancelLoading(val = '老师也不知道答案哦。', idx){//获取答案后关闭loading态
+    console.log(val)
+
     let { dialogs } = this.state,
-      len = dialogs.length,
-      dialog = dialogs[len-1]
+      len = dialogs.length - 1
+      dialog = dialogs[len]
 
     dialog.loading = false
     dialog.text = val
-    this.updateDBMsg(dialog)
     this.setState({
       dialogs
     })
+    // this.updateDBMsg(dialog)
   }
-  async getData(msg){//发送请求
+  async getData(msg, idx){//发送请求
     try{
       let subject = mapping(this.state.subject)
       let res = await fetchWithTimeout(fetch('http://166.111.68.66:8007/course/inputQuestion', {
