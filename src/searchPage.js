@@ -10,7 +10,7 @@ import HeadSearch from './components/headSearch';
 import ResultText from './components/resultText';
 import Item from './components/item';
 import { getDBData, mapping, decodeSearchResult } from './lib/lib'
-
+import Toast from './components/toast';
 
 export default class SearchPage extends PureComponent {
   static navigationOptions = {
@@ -27,9 +27,15 @@ export default class SearchPage extends PureComponent {
     this._renderItem = this._renderItem.bind(this);
     this._keyExtractor = this._keyExtractor.bind(this);
     this._seperator = this._seperator.bind(this);
+    this.hideToast = this.hideToast.bind(this);
   }
   onSubmitEditing({nativeEvent}){
     //TODO: show loading toast
+    this.showToast({
+      msg: '搜索中',
+      type: 'loading'
+    })
+
     try{
       const { navigation } = this.props
       const subject = navigation.getParam('subject')
@@ -38,15 +44,39 @@ export default class SearchPage extends PureComponent {
         realm: window.realm,
         subject: mapping(subject)
       });
-      //TODO: hide loading toast
+      this.hideToast()
       const list = decodeSearchResult(datas);
+      !list.length && this.showToast({
+
+        msg:'搜索结果为空',
+        type:'success',
+        duration: 3000
+      })
+  
       this.setState({
         list
       });
     }catch(e){
-      //TODO: hide loading toast
-      //TODO: show error toast
+      this.showToast({
+
+        msg:'搜索出错',
+        type:'error',
+        duration: 3000
+      })
     }
+  }
+  showToast({msg, type, duration=null}){
+    this.setState({
+      toastVisible: true,
+      toastMsg: msg,
+      toastType: type,
+      toastDuration: duration
+    })
+  }
+  hideToast(){
+    this.setState({
+      toastVisible: false
+    })
   }
   goBack(){
     this.props.navigation.goBack();
@@ -72,10 +102,17 @@ export default class SearchPage extends PureComponent {
   );
   render() {
     const { navigation } = this.props
-    const { list } = this.state
+    const { list, toastType, toastDuration, toastMsg, toastVisible } = this.state
     const subject = navigation.getParam('subject')
     return (
       <View style={styles.container}>
+        <Toast
+          type={toastType}
+          duration={toastDuration}
+          msg={toastMsg}
+          visible={toastVisible}
+          handleHideToast={this.hideToast}
+        ></Toast>
         <HeadSearch
           subject={subject}
           onSubmitEditing={this.onSubmitEditing}

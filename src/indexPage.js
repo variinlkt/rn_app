@@ -85,7 +85,6 @@ export default class IndexPage extends Component {
     this.addMsg = this.addMsg.bind(this)
     this._keyboardDidShow = this._keyboardDidShow.bind(this)
     this._keyboardDidHide = this._keyboardDidHide.bind(this)
-    this._onLayout = this._onLayout.bind(this)
     this._renderItem = this._renderItem.bind(this)
     this._keyExtractor = this._keyExtractor.bind(this)
     this._renderFooterCmp = this._renderFooterCmp.bind(this)
@@ -221,10 +220,6 @@ export default class IndexPage extends Component {
       marginBottom: height
     })
     setTimeout(()=>this._listRef.scrollToEnd(), 100)
-  }
-  _onLayout(e){//获取list的高度
-    let { height } = e.nativeEvent.layout
-    this.listHeight = height
   }
   _keyboardDidShow(e){//键盘显示
     this.keyboardHeight = e && e.endCoordinates.height

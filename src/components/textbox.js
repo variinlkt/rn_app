@@ -245,7 +245,7 @@ export default class Textbox extends PureComponent {
             text: ''
         })
     }
-    selectImg(){//
+    selectImg(){//选择图片
         ImagePicker.openPicker({
             cropping: false
         })
@@ -257,7 +257,11 @@ export default class Textbox extends PureComponent {
 
         }).catch(e=>console.log(e))
     }
-    uploadImg(path){
+    uploadImg(path){//上传图片
+        this.showToast({
+            msg: '转换文字中',
+            type: 'loading'
+        })
         RNFetchBlob.fs.readFile(path, 'base64')
         .then(async imgData=>{
             let encoded = encodeURIComponent(imgData)
@@ -272,7 +276,7 @@ export default class Textbox extends PureComponent {
             })
             .catch((err) => {
                 this.showToast({
-                    msg: '上传录音失败',
+                    msg: '上传图片失败',
                     type: 'error',
                     duration: 3000
     
