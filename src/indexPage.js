@@ -180,7 +180,7 @@ export default class IndexPage extends Component {
       subject
     })
   }
-  cancelLoading(val = '老师也不知道答案哦。', idx){//获取答案后关闭loading态
+  cancelLoading(val = '我也不知道答案哦。', idx){//获取答案后关闭loading态
     let { dialogs } = this.state,
       len = dialogs.length - 1
       dialog = dialogs[len]

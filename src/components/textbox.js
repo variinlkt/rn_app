@@ -40,7 +40,7 @@ export default class Textbox extends PureComponent {
         AudioRecorder.requestAuthorization().then((isAuthorised) => {
             if (!isAuthorised) {
                 this.showToast({
-                    msg: '录音初始化失败',
+                    msg: '获取授权失败',
                     type: 'error',
                     duration: 3000
                 })
@@ -101,7 +101,6 @@ export default class Textbox extends PureComponent {
             this.setState({
                 audioToken: value
             })
-            console.log(value)
         } catch (error) {
             this.showToast({
                 msg: '获取语音token失败',
@@ -123,7 +122,6 @@ export default class Textbox extends PureComponent {
             this.setState({
                 imgToken: value
             })
-            console.log(value)
         } catch (error) {
             this.showToast({
                 msg: '获取图片token失败',
@@ -215,6 +213,14 @@ export default class Textbox extends PureComponent {
                 await this.getToken()
                 this.uploadFile(audioFileURL, audioFileSize)
                 break;
+            case 3308://语音过长
+            case 3310:
+                this.showToast({
+                    msg: '录音过长',
+                    type: 'error',
+                    duration: 3000
+                })
+                break;
             default://其他问题
                 this.showToast({
                     msg: '转换接口错误',
@@ -255,7 +261,14 @@ export default class Textbox extends PureComponent {
             })
             this.uploadImg(image.path)
 
-        }).catch(e=>console.log(e))
+        }).catch(e=>{
+            this.showToast({
+                msg: '获取授权失败',
+                type: 'error',
+                duration: 3000
+
+            })
+        })
     }
     uploadImg(path){//上传图片
         this.showToast({
@@ -283,7 +296,14 @@ export default class Textbox extends PureComponent {
                 })
                 console.log(err)
             })
-        }).catch(e=>console.log(e))
+        }).catch(e=>{
+            this.showToast({
+                msg: '读取文件失败',
+                type: 'error',
+                duration: 3000
+
+            })
+        })
     }
     async handleImgData(data){
         const { words_result_num, words_result, error_code, error_msg } = data
@@ -309,7 +329,7 @@ export default class Textbox extends PureComponent {
                     break;
                 case 216202:
                     this.showToast({
-                        msg: '图片过大，请重试',
+                        msg: '图片大小错误',
                         type: 'error',
                         duration: 3000
                     })
@@ -336,6 +356,7 @@ export default class Textbox extends PureComponent {
             this.setState({
                 text: res
             })
+            // this.hideToast()
             this.showToast({
                 msg: '转换完成',
                 type: 'success',
@@ -370,9 +391,12 @@ export default class Textbox extends PureComponent {
 
             })
         }
-    }
+    }//超时
     async stopRecord(){
         try {
+            if(this.state.toastVisible == false){
+                return
+            }
             this.hideToast()
             const filePath = await AudioRecorder.stopRecording();
             return filePath;

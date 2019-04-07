@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import {
     StyleSheet,
     View,
@@ -9,37 +9,46 @@ import {
     Easing
 } from 'react-native';
 
-export default class Toast extends PureComponent {
+export default class Toast extends Component {
     constructor(props){
         super(props)
         this.state = {
             degree: new Animated.Value(0), 
         }
-        this.onShow = this.onShow.bind(this)
     }
-    componentDidMount() {
-        const{ type } = this.props
-        if(type != 'loading'){
-            return;
+    // componentDidMount() {
+    //     const{ type } = this.props
+    //     if(type != 'loading'){
+    //         return;
+    //     }
+    //     let animation = Animated.timing(                       
+    //       this.state.degree,           
+    //       {
+    //         toValue: 360,                        
+    //         duration: 1200, 
+    //         easing: Easing.inOut(Easing.linear)
+    //       }
+    //     )
+    //     Animated.loop(animation).start();  
+    // }
+    componentDidUpdate(){
+        const{ type, duration, handleHideToast } = this.props
+        if(type == 'loading'){
+            let animation = Animated.timing(                       
+                this.state.degree,           
+                {
+                  toValue: 360,                        
+                  duration: 1200, 
+                  easing: Easing.inOut(Easing.linear)
+                }
+              )
+              Animated.loop(animation).start();  
         }
-        let animation = Animated.timing(                       
-          this.state.degree,           
-          {
-            toValue: 360,                        
-            duration: 1200, 
-            easing: Easing.inOut(Easing.linear)
-          }
-        )
-        Animated.loop(animation).start();                           
-    }
-    onShow() {
-        const{ duration, handleHideToast } = this.props
-        if(!duration){
-            return;
+        if(duration){
+            let timer = setTimeout(() => {
+                handleHideToast()
+            }, duration);
         }
-        let timer = setTimeout(() => {
-            handleHideToast()
-        }, duration);
     }
     render() {
         const { degree } = this.state
@@ -51,12 +60,10 @@ export default class Toast extends PureComponent {
             'loading': require('../assets/img/loading_toast.png'),
             'recording': require('../assets/img/recording.png')
         }
-        console.log(type)
         return (
             <Modal
                 transparent={true}
                 visible={visible}
-                onShow={this.onShow}
                 animationType="fade"
             >
                 <View style={styles.container}>

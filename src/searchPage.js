@@ -30,7 +30,6 @@ export default class SearchPage extends PureComponent {
     this.hideToast = this.hideToast.bind(this);
   }
   onSubmitEditing({nativeEvent}){
-    //TODO: show loading toast
     this.showToast({
       msg: '搜索中',
       type: 'loading'
