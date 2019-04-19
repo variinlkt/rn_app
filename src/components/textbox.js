@@ -246,6 +246,14 @@ export default class Textbox extends PureComponent {
     }
     onPressSend(){//发送问题
         let {text} = this.state
+        if(/[\\\/<>]/.exec(text) != null){
+            this.showToast({
+                msg: '输入含有非法字符',
+                type: 'error',
+                duration: 3000
+            })
+            return;
+        }
         this.props.onPress(text)
         this.setState({
             text: ''

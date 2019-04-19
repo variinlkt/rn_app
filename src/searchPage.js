@@ -30,6 +30,15 @@ export default class SearchPage extends PureComponent {
     this.hideToast = this.hideToast.bind(this);
   }
   onSubmitEditing({nativeEvent}){
+    const { navigation } = this.props
+    if(/[\\\/<>]/.exec(nativeEvent.text) != null){
+      this.showToast({
+          msg: '输入含有非法字符',
+          type: 'error',
+          duration: 3000
+      })
+      return;
+    } 
     this.showToast({
       msg: '搜索中',
       type: 'loading'
