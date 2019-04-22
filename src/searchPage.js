@@ -31,7 +31,8 @@ export default class SearchPage extends PureComponent {
   }
   onSubmitEditing({nativeEvent}){
     const { navigation } = this.props
-    if(/[\\\/<>]/.exec(nativeEvent.text) != null){
+    const text = nativeEvent.text
+    if(/[\\\/<>]/.exec(text) != null){
       this.showToast({
           msg: '输入含有非法字符',
           type: 'error',
@@ -39,13 +40,20 @@ export default class SearchPage extends PureComponent {
       })
       return;
     } 
+    if(!text.trim().length){
+      this.showToast({
+        msg: '输入为空',
+        type: 'error',
+        duration: 3000
+      })
+      return;
+    }
     this.showToast({
       msg: '搜索中',
       type: 'loading'
     })
 
     try{
-      const { navigation } = this.props
       const subject = navigation.getParam('subject')
       const datas = getDBData({
         filters: nativeEvent.text,
@@ -65,6 +73,7 @@ export default class SearchPage extends PureComponent {
         list
       });
     }catch(e){
+      console.log(e)
       this.showToast({
 
         msg:'搜索出错',

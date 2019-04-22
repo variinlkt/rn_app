@@ -254,6 +254,14 @@ export default class Textbox extends PureComponent {
             })
             return;
         }
+        if(!text.trim().length){
+            this.showToast({
+              msg: '输入为空',
+              type: 'error',
+              duration: 3000
+            })
+            return;
+        }
         this.props.onPress(text)
         this.setState({
             text: ''

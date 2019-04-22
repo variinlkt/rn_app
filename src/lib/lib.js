@@ -3,9 +3,14 @@
 export function getDBData({realm, subject, filters}){//获取db中的聊天记录
     let data = realm.objects(subject);
     if(filters){
-      data = data.filtered('text CONTAINS "'+filters+'"');
+      let filterArray = filters.split(' ');
+      let filterText = "";
+      filterArray.forEach(filterItem => {
+        filterText += 'text CONTAINS "'+filterItem+'" AND ';
+      });
+      filterText = filterText.slice(0, -5);
+      data = data.filtered(filterText);
     }
-    // data.map(item=>console.log(item))
     return data;
 }
 export function mapping(subject){//中文学科名对应的英文，用于请求
